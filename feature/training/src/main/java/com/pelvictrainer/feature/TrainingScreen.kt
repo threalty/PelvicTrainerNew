@@ -1,495 +1,303 @@
-package com.pelvictrainer.feature
+package com.pelvictrainer.feature.training
 
-
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
+import android.animation.ValueAnimator
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-
-
+import com.pelvictrainer.domain.model.TrainingPhase
+import com.pelvictrainer.domain.model.TrainingPreset
+import kotlinx.coroutines.launch
 
 @Composable
 fun TrainingScreen(
-
-    presetId: String,
-
+    presetId: Long,
+    onNavigateBack: () -> Unit,
     viewModel: TrainingViewModel = hiltViewModel()
-
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
-
-
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
-
-
-    val scale = remember {
-
-        Animatable(1f)
-
+    // Инициализация тренировки при первом запуске экрана
+    LaunchedEffect(presetId) {
+        viewModel.loadPreset(presetId)
     }
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Тренировка") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            androidx.compose.material.icons.Icons.Default.ArrowBack,
+                            contentDescription = "Назад"
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState()),
+            contentAlignment = Alignment.Center
+        ) {
+            when (val state = uiState) {
+                is TrainingUiState.Loading -> {
+                    CircularProgressIndicator()
+                }
+                is TrainingUiState.Ready -> {
+                    TrainingContent(
+                        preset = state.preset,
+                        phase = TrainingPhase.IDLE,
+                        progress = 0f,
+                        timeLeft = 0,
+                        repsLeft = state.preset.totalReps,
+                        onStart = { viewModel.startTraining(state.preset) }
+                    )
+                }
+                is TrainingUiState.Training -> {
+                    TrainingContent(
+                        preset = state.preset,
+                        phase = state.phase,
+                        progress = state.progress,
+                        timeLeft = state.timeLeft,
+                        repsLeft = state.repsLeft,
+                        onStart = {}
+                    )
+                }
+                is TrainingUiState.Finished -> {
+                    TrainingFinishedContent(
+                        preset = state.preset,
+                        onRestart = { viewModel.startTraining(state.preset) },
+                        onBack = onNavigateBack
+                    )
+                }
+                is TrainingUiState.Error -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Ошибка: ${state.message}")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = onNavigateBack) {
+                            Text("Назад")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
-
-
-
-    LaunchedEffect(presetId) {
-
-
-        viewModel.loadPreset(
-
-            presetId
-
+@Composable
+private fun TrainingContent(
+    preset: TrainingPreset,
+    phase: TrainingPhase,
+    progress: Float,
+    timeLeft: Int,
+    repsLeft: Int,
+    onStart: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = preset.name,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
         )
 
+        Spacer(modifier = Modifier.height(32.dp))
 
-    }
+        // Кольцо прогресса
+        TrainingRing(
+            phase = phase,
+            progress = progress,
+            totalSqueezeTime = preset.squeezeTime,
+            totalHoldTime = preset.holdTime,
+            totalRelaxTime = preset.relaxTime
+        )
 
+        Spacer(modifier = Modifier.height(32.dp))
 
+        // Текст инструкции
+        Text(
+            text = getInstructionText(phase, timeLeft),
+            style = MaterialTheme.typography.titleLarge,
+            color = getPhaseColor(phase)
+        )
 
+        Spacer(modifier = Modifier.height(8.dp))
 
+        Text(
+            text = "Осталось повторений: $repsLeft",
+            style = MaterialTheme.typography.bodyLarge
+        )
 
-    LaunchedEffect(state.phase) {
-
-
-        when(state.phase) {
-
-
-
-            TrainingPhase.CONTRACT -> {
-
-
-                scale.animateTo(
-
-                    targetValue = 1.2f,
-
-                    animationSpec = tween(400)
-
-                )
-
-
+        if (phase == TrainingPhase.IDLE) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onStart) {
+                Text("Начать тренировку")
             }
-
-
-
-            TrainingPhase.HOLD -> {
-
-
-                scale.animateTo(
-
-                    targetValue = 1.25f,
-
-                    animationSpec = tween(300)
-
-                )
-
-
-            }
-
-
-
-
-            TrainingPhase.RELAX -> {
-
-
-                scale.animateTo(
-
-                    targetValue = 0.85f,
-
-                    animationSpec = tween(600)
-
-                )
-
-
-            }
-
-
-
-
-
-            TrainingPhase.COMPLETE -> {
-
-
-                scale.animateTo(
-
-                    targetValue = 1f,
-
-                    animationSpec = tween(500)
-
-                )
-
-
-            }
-
-
         }
-
-
     }
+}
 
+@Composable
+private fun TrainingRing(
+    phase: TrainingPhase,
+    progress: Float,
+    totalSqueezeTime: Int,
+    totalHoldTime: Int,
+    totalRelaxTime: Int
+) {
+    val strokeWidth = 28.dp
+    val size = 240.dp
 
+    // Анимация для фазы сжатия (увеличение кольца)
+    val squeezeProgress by animateFloatAsState(
+        targetValue = if (phase == TrainingPhase.SQUEEZE) progress else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "squeezeProgress"
+    )
 
+    // Анимация для фазы удержания (пульсация)
+    val holdScale by animateFloatAsState(
+        targetValue = if (phase == TrainingPhase.HOLD) 1.1f else 1f,
+        animationSpec = spring(),
+        label = "holdScale"
+    )
 
+    // Анимация для фазы расслабления (уменьшение кольца)
+    val relaxProgress by animateFloatAsState(
+        targetValue = if (phase == TrainingPhase.RELAX) progress else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "relaxProgress"
+    )
 
-
-
-    val phaseColor = when(state.phase) {
-
-
-        TrainingPhase.CONTRACT ->
-
-            MaterialTheme.colorScheme.primary
-
-
-
-        TrainingPhase.HOLD ->
-
-            MaterialTheme.colorScheme.secondary
-
-
-
-        TrainingPhase.RELAX ->
-
-            MaterialTheme.colorScheme.tertiary
-
-
-
-        TrainingPhase.COMPLETE ->
-
-            MaterialTheme.colorScheme.primaryContainer
-
-
-    }
-
-
-
-
-
-    val phaseText = when(state.phase) {
-
-
-        TrainingPhase.CONTRACT ->
-
-            "Сжать"
-
-
-
-        TrainingPhase.HOLD ->
-
-            "Держать"
-
-
-
-        TrainingPhase.RELAX ->
-
-            "Расслабить"
-
-
-
-        TrainingPhase.COMPLETE ->
-
-            "Готово"
-
-
-    }
-
-
-
-
-
-
-    Box(
-
+    Canvas(
         modifier = Modifier
-
-            .fillMaxSize()
-
-            .background(
-
-                MaterialTheme.colorScheme.background
-
-            ),
-
-        contentAlignment = Alignment.Center
-
+            .size(size)
+            .scale(if (phase == TrainingPhase.HOLD) holdScale else 1f)
     ) {
-
-
-
-        Column(
-
-            horizontalAlignment = Alignment.CenterHorizontally,
-
-            verticalArrangement = Arrangement.Center
-
-        ) {
-
-
-
-            Text(
-
-                text = phaseText,
-
-                style = MaterialTheme.typography.headlineLarge
-
-            )
-
-
-
-
-
-            Spacer(
-
-                modifier = Modifier.height(40.dp)
-
-            )
-
-
-
-
-
-
-
-            Box(
-
-                modifier = Modifier
-
-                    .size(240.dp)
-
-                    .scale(scale.value),
-
-                contentAlignment = Alignment.Center
-
-            ) {
-
-
-
-                Canvas(
-
-                    modifier = Modifier.fillMaxSize()
-
-                ) {
-
-
-
-                    val strokeWidth = 28.dp.toPx()
-
-
-
-                    drawCircle(
-
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-
-                        style = Stroke(
-
-                            width = strokeWidth
-
-                        )
-
-                    )
-
-
-
-
-                    val progress =
-
-                        if(state.phaseDuration > 0)
-
-                            state.secondsLeft.toFloat() /
-
-                                    state.phaseDuration.toFloat()
-
-                        else
-
-                            0f
-
-
-
-
-
-                    drawArc(
-
-                        color = phaseColor,
-
-                        startAngle = -90f,
-
-                        sweepAngle =
-
-                            360f * progress.coerceIn(
-
-                                0f,
-
-                                1f
-
-                            ),
-
-                        useCenter = false,
-
-                        style = Stroke(
-
-                            width = strokeWidth,
-
-                            cap = StrokeCap.Round
-
-                        )
-
-                    )
-
-
-                }
-
-
-
-
-
-
-                Text(
-
-                    text = state.secondsLeft.toString(),
-
-                    style = MaterialTheme.typography.displayLarge
-
-                )
-
-
-            }
-
-
-
-
-
-
-
-            Spacer(
-
-                modifier = Modifier.height(35.dp)
-
-            )
-
-
-
-
-
-
-
-            Text(
-
-                text =
-
-                    "${state.currentRepeat} / ${state.totalRepeats}",
-
-                style = MaterialTheme.typography.titleMedium
-
-            )
-
-
-
-
-
-
-            Spacer(
-
-                modifier = Modifier.height(30.dp)
-
-            )
-
-
-
-
-
-
-            if(!state.completed) {
-
-
-
-                Button(
-
-                    onClick = {
-
-
-                        if(state.isRunning) {
-
-
-                            viewModel.pause()
-
-
-                        } else {
-
-
-                            viewModel.start()
-
-
-                        }
-
-
-                    }
-
-                ) {
-
-
-
-                    Text(
-
-                        text =
-
-                            if(state.isRunning)
-
-                                "Пауза"
-
-                            else
-
-                                "Старт"
-
-                    )
-
-
-                }
-
-
-
-            } else {
-
-
-
-                Text(
-
-                    text = "Тренировка завершена",
-
-                    style = MaterialTheme.typography.headlineSmall
-
-                )
-
-
-            }
-
-
-
+        val diameter = size.toPx()
+        val radius = diameter / 2
+        val center = Offset(radius, radius)
+        val strokeWidthPx = strokeWidth.toPx()
+
+        // Фоновое кольцо
+        drawCircle(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            radius = radius,
+            center = center,
+            style = Stroke(width = strokeWidthPx)
+        )
+
+        // Активное кольцо
+        val sweepAngle = when (phase) {
+            TrainingPhase.SQUEEZE -> 360f * squeezeProgress
+            TrainingPhase.HOLD -> 360f
+            TrainingPhase.RELAX -> 360f * (1f - relaxProgress)
+            TrainingPhase.IDLE -> 0f
         }
 
-
+        if (sweepAngle > 0) {
+            drawArc(
+                color = getPhaseColor(phase),
+                startAngle = -90f,
+                sweepAngle = sweepAngle,
+                useCenter = false,
+                topLeft = Offset(0f, 0f),
+                size = Size(diameter, diameter),
+                style = Stroke(
+                    width = strokeWidthPx,
+                    cap = StrokeCap.Round
+                )
+            )
+        }
     }
+}
 
+@Composable
+private fun TrainingFinishedContent(
+    preset: TrainingPreset,
+    onRestart: () -> Unit,
+    onBack: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            androidx.compose.material.icons.Icons.Default.CheckCircle,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Тренировка завершена!",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Пресет: ${preset.name}",
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedButton(onClick = onBack) {
+                Text("Готово")
+            }
+            Button(onClick = onRestart) {
+                Text("Повторить")
+            }
+        }
+    }
+}
+
+private fun getInstructionText(phase: TrainingPhase, timeLeft: Int): String {
+    return when (phase) {
+        TrainingPhase.IDLE -> "Нажмите кнопку начала"
+        TrainingPhase.SQUEEZE -> "Сжать! ($timeLeft сек)"
+        TrainingPhase.HOLD -> "Держать! ($timeLeft сек)"
+        TrainingPhase.RELAX -> "Расслабить! ($timeLeft сек)"
+        TrainingPhase.FINISHED -> "Отдых между подходами..."
+    }
+}
+
+private fun getPhaseColor(phase: TrainingPhase): Color {
+    return when (phase) {
+        TrainingPhase.SQUEEZE -> MaterialTheme.colorScheme.primary
+        TrainingPhase.HOLD -> MaterialTheme.colorScheme.secondary
+        TrainingPhase.RELAX -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.onSurface
+    }
 }
