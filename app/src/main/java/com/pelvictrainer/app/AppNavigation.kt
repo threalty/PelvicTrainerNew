@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-
 import com.pelvictrainer.feature.TrainingScreen
 import com.pelvictrainer.feature.TrainingSettingsScreen
 
@@ -17,6 +16,7 @@ fun AppNavigation(
     navController: NavHostController
 
 ) {
+
 
 
     NavHost(
@@ -60,22 +60,27 @@ fun AppNavigation(
 
 
 
+
         composable(
 
             route = "training/{presetId}"
 
-        ) {
+        ) { entry ->
 
 
 
             val presetId =
 
-                it.arguments
+                entry.arguments
+
                     ?.getString("presetId")
 
 
 
+
+
             if (presetId != null) {
+
 
 
                 TrainingScreen(
@@ -88,13 +93,10 @@ fun AppNavigation(
             }
 
 
-
         }
 
 
-
     }
-
 
 
 }

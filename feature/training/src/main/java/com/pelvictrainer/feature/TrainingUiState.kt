@@ -1,21 +1,39 @@
-package com.pelvictrainer.feature.training
+package com.pelvictrainer.feature
 
-import com.pelvictrainer.training.TrainingPhase
+
 
 data class TrainingUiState(
 
-    val phase: TrainingPhase = TrainingPhase.IDLE,
+    val phase: TrainingPhase = TrainingPhase.CONTRACT,
 
     val secondsLeft: Int = 0,
 
-    val currentRepeat: Int = 1,
+    val phaseDuration: Int = 0,
 
-    val totalRepeats: Int = 10,
+    val currentRepeat: Int = 0,
 
-    val progress: Float = 0f,
+    val totalRepeats: Int = 0,
 
     val isRunning: Boolean = false,
 
     val completed: Boolean = false
 
 )
+
+
+
+enum class TrainingPhase {
+
+
+    CONTRACT,
+
+
+    HOLD,
+
+
+    RELAX,
+
+
+    COMPLETE
+
+}

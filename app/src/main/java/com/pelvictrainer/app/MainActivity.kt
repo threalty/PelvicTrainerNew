@@ -2,15 +2,10 @@ package com.pelvictrainer.app
 
 
 import android.os.Bundle
-
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-
 import androidx.navigation.compose.rememberNavController
-
-import androidx.compose.material3.MaterialTheme
-
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -25,7 +20,6 @@ class MainActivity : ComponentActivity() {
 
     ) {
 
-
         super.onCreate(savedInstanceState)
 
 
@@ -37,24 +31,15 @@ class MainActivity : ComponentActivity() {
         setContent {
 
 
-            MaterialTheme {
+            val navController = rememberNavController()
 
 
 
-                val navController =
+            AppNavigation(
 
-                    rememberNavController()
+                navController = navController
 
-
-
-                AppNavigation(
-
-                    navController = navController
-
-                )
-
-
-            }
+            )
 
 
         }

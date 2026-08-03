@@ -6,18 +6,17 @@ plugins {
 
     alias(libs.plugins.ksp)
 
-    alias(libs.plugins.hilt)
-
-    alias(libs.plugins.kotlin.kapt)
-
 }
+
 
 
 android {
 
     namespace = "com.pelvictrainer.database"
 
-    compileSdk = 35
+
+    compileSdk = 36
+
 
 
     defaultConfig {
@@ -25,6 +24,15 @@ android {
         minSdk = 26
 
     }
+
+
+
+    buildFeatures {
+
+        buildConfig = true
+
+    }
+
 
 
     compileOptions {
@@ -36,34 +44,52 @@ android {
     }
 
 
-    kotlinOptions {
 
-        jvmTarget = "17"
+    kotlin {
+
+        jvmToolchain(17)
 
     }
 
 }
 
 
+
+
+
 dependencies {
 
 
-    implementation("androidx.room:room-runtime:2.7.0")
 
-    implementation("androidx.room:room-ktx:2.7.0")
+    implementation(
 
-    ksp("androidx.room:room-compiler:2.7.0")
+        libs.androidx.core.ktx
 
-
-    implementation(project(":domain"))
+    )
 
 
-    implementation(libs.androidx.core.ktx)
+
+    implementation(
+
+        libs.room.runtime
+
+    )
 
 
-    // Hilt
-    implementation(libs.hilt.android)
 
-    kapt(libs.hilt.compiler)
+    implementation(
+
+        libs.room.ktx
+
+    )
+
+
+
+    ksp(
+
+        libs.room.compiler
+
+    )
+
 
 }

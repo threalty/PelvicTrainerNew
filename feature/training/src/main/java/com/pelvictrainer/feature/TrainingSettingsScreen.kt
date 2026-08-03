@@ -2,65 +2,101 @@ package com.pelvictrainer.feature
 
 
 import android.util.Log
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
-
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-import androidx.hilt.navigation.compose.hiltViewModel
-
 import com.pelvictrainer.domain.model.TrainingPreset
+
+
+
+private val trainingPresets = listOf(
+
+    TrainingPreset(
+        id = "beginner",
+        name = "Начальный",
+        description = "Лёгкая тренировка",
+        contractSeconds = 3,
+        holdSeconds = 3,
+        relaxSeconds = 5,
+        repeats = 10
+    ),
+
+
+    TrainingPreset(
+        id = "medium",
+        name = "Средний",
+        description = "Стандартная тренировка",
+        contractSeconds = 5,
+        holdSeconds = 5,
+        relaxSeconds = 5,
+        repeats = 15
+    ),
+
+
+    TrainingPreset(
+        id = "advanced",
+        name = "Продвинутый",
+        description = "Интенсивная тренировка",
+        contractSeconds = 8,
+        holdSeconds = 8,
+        relaxSeconds = 5,
+        repeats = 20
+    )
+
+)
 
 
 
 @Composable
 fun TrainingSettingsScreen(
 
-    onStartTraining: (TrainingPreset) -> Unit,
-
-    viewModel: TrainingSettingsViewModel = hiltViewModel()
+    onStartTraining: (TrainingPreset) -> Unit
 
 ) {
 
 
-    val state by viewModel.state.collectAsState()
+    var selectedPreset by remember {
 
+        mutableStateOf(
 
+            trainingPresets[1]
 
-    Log.d(
+        )
 
-        "TRAINING_SETTINGS",
-
-        "selected=${state.selectedPreset}"
-
-    )
+    }
 
 
 
     Column(
 
         modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
 
-        verticalArrangement = Arrangement.Top
+            .fillMaxSize()
+
+            .padding(24.dp),
+
+        horizontalAlignment = Alignment.CenterHorizontally,
+
+        verticalArrangement = Arrangement.Center
 
     ) {
 
@@ -68,7 +104,7 @@ fun TrainingSettingsScreen(
 
         Text(
 
-            text = "Выберите тренировку",
+            text = "Настройка тренировки",
 
             style = MaterialTheme.typography.headlineMedium
 
@@ -78,74 +114,144 @@ fun TrainingSettingsScreen(
 
         Spacer(
 
-            modifier = Modifier.height(20.dp)
+            modifier = Modifier.height(30.dp)
 
         )
 
 
 
-        state.presets.forEach { preset ->
+
+
+        LazyColumn(
+
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+
+        ) {
+
+
+            items(trainingPresets) { preset ->
 
 
 
-            Card(
+                Card(
 
-                modifier = Modifier
+                    modifier = Modifier
 
-                    .fillMaxWidth()
-
-                    .padding(vertical = 8.dp)
-
-                    .clickable {
+                        .clickable {
 
 
-                        Log.d(
+                            Log.d(
 
-                            "TRAINING_SETTINGS",
+                                "TRAINING_SETTINGS",
 
-                            "CLICK preset=$preset"
+                                "CLICK preset=$preset"
 
-                        )
-
-
-                        viewModel.selectPreset(preset)
+                            )
 
 
-                    }
-
-            ) {
+                            selectedPreset = preset
 
 
+                            Log.d(
 
-                Column(
+                                "TRAINING_SETTINGS",
 
-                    modifier = Modifier.padding(16.dp)
+                                "selected=$selectedPreset"
+
+                            )
+
+
+                        }
 
                 ) {
 
 
 
-                    Text(
+                    Column(
 
-                        text = preset.name,
+                        modifier = Modifier.padding(16.dp)
 
-                        style = MaterialTheme.typography.titleLarge
-
-                    )
+                    ) {
 
 
-                    Spacer(
 
-                        modifier = Modifier.height(8.dp)
+                        RadioButton(
 
-                    )
+                            selected =
+
+                                selectedPreset.id == preset.id,
+
+                            onClick = {
 
 
-                    Text(
+                                selectedPreset = preset
 
-                        text = preset.description
 
-                    )
+                                Log.d(
+
+                                    "TRAINING_SETTINGS",
+
+                                    "RADIO selected=$selectedPreset"
+
+                                )
+
+
+                            }
+
+                        )
+
+
+
+
+
+                        Text(
+
+                            text = preset.name,
+
+                            style = MaterialTheme.typography.titleLarge
+
+                        )
+
+
+
+
+
+                        Text(
+
+                            text = preset.description
+
+                        )
+
+
+
+
+
+                        Spacer(
+
+                            modifier = Modifier.height(6.dp)
+
+                        )
+
+
+
+
+
+                        Text(
+
+                            text =
+
+                                "${preset.contractSeconds} сек сжатие • " +
+
+                                        "${preset.holdSeconds} сек удержание • " +
+
+                                        "${preset.relaxSeconds} сек отдых • " +
+
+                                        "${preset.repeats} повторов"
+
+                        )
+
+
+                    }
 
 
                 }
@@ -159,17 +265,18 @@ fun TrainingSettingsScreen(
 
 
 
+
         Spacer(
 
-            modifier = Modifier.height(24.dp)
+            modifier = Modifier.height(30.dp)
 
         )
 
 
 
-        Button(
 
-            enabled = state.selectedPreset != null,
+
+        Button(
 
             onClick = {
 
@@ -178,24 +285,21 @@ fun TrainingSettingsScreen(
 
                     "TRAINING_SETTINGS",
 
-                    "BUTTON CLICK selected=${state.selectedPreset}"
+                    "BUTTON CLICK selected=$selectedPreset"
 
                 )
 
 
-                state.selectedPreset?.let {
+                onStartTraining(
 
+                    selectedPreset
 
-                    onStartTraining(it)
-
-
-                }
+                )
 
 
             }
 
         ) {
-
 
 
             Text(

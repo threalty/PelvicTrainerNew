@@ -8,16 +8,18 @@ plugins {
 
     alias(libs.plugins.hilt)
 
-    alias(libs.plugins.kotlin.kapt)
+    kotlin("kapt")
 
 }
 
 
+
 android {
 
-    namespace = "com.pelvictrainer"
+    namespace = "com.pelvictrainer.app"
 
-    compileSdk = 35
+    compileSdk = 36
+
 
 
     defaultConfig {
@@ -26,13 +28,18 @@ android {
 
         minSdk = 26
 
-        targetSdk = 35
+        targetSdk = 36
 
         versionCode = 1
 
         versionName = "1.0"
 
+
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
+
     }
+
 
 
     buildTypes {
@@ -41,9 +48,31 @@ android {
 
             isMinifyEnabled = false
 
+
+            proguardFiles(
+
+                getDefaultProguardFile(
+                    "proguard-android-optimize.txt"
+                ),
+
+                "proguard-rules.pro"
+
+            )
+
         }
 
     }
+
+
+
+    buildFeatures {
+
+        compose = true
+
+        buildConfig = true
+
+    }
+
 
 
     compileOptions {
@@ -55,58 +84,121 @@ android {
     }
 
 
-    kotlinOptions {
 
-        jvmTarget = "17"
+    kotlin {
+
+        jvmToolchain(17)
 
     }
 
 
-    buildFeatures {
 
-        compose = true
+    packaging {
+
+        resources {
+
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+
+        }
 
     }
 
 }
 
 
+
+
+
 dependencies {
-    implementation(project(":domain"))
-    implementation(project(":data"))
 
-    implementation(project(":core:common"))
-
-    implementation(project(":core:navigation"))
-
-    implementation(project(":core:datastore"))
-
-    implementation(project(":core:database"))
-
-    implementation(project(":core:network"))
-
-    implementation(project(":core:designsystem"))
 
 
     implementation(project(":feature:training"))
 
-
-    implementation(libs.androidx.core.ktx)
-
-    implementation(libs.androidx.activity.compose)
+    implementation(project(":domain"))
 
 
-    implementation(platform(libs.compose.bom))
 
-    implementation(libs.compose.ui)
+    implementation(
 
-    implementation(libs.compose.material3)
+        libs.androidx.core.ktx
+
+    )
 
 
-    implementation(libs.hilt.android)
 
-    implementation(libs.hilt.navigation.compose)
+    implementation(
 
-    kapt(libs.hilt.compiler)
+        libs.androidx.activity.compose
+
+    )
+
+
+
+    implementation(
+
+        libs.androidx.navigation.compose
+
+    )
+
+
+
+    implementation(
+
+        libs.hilt.android
+
+    )
+
+
+
+    implementation(
+
+        libs.hilt.navigation.compose
+
+    )
+
+
+
+    kapt(
+
+        libs.hilt.compiler
+
+    )
+
+
+
+    implementation(
+
+        platform(
+
+            libs.compose.bom
+
+        )
+
+    )
+
+
+
+    implementation(
+
+        libs.compose.ui
+
+    )
+
+
+
+    implementation(
+
+        libs.compose.material3
+
+    )
+
+
+
+    debugImplementation(
+
+        libs.compose.ui.tooling
+
+    )
 
 }

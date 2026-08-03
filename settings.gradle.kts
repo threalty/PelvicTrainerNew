@@ -13,10 +13,13 @@ pluginManagement {
 }
 
 
+
 dependencyResolutionManagement {
 
     repositoriesMode.set(
+
         RepositoriesMode.FAIL_ON_PROJECT_REPOS
+
     )
 
 
@@ -31,17 +34,19 @@ dependencyResolutionManagement {
 }
 
 
-rootProject.name = "PelvicTrainer"
 
-include(":core:navigation")
-include(":core:common")
-include(":core:datastore")
-include(":core:database")
-include(":core:network")
-include(":core:designsystem")
-include(":data")
-include(":feature:training")
+rootProject.name = "PelvicTrainer2"
 
-include(":domain")
 
-include(":app")
+
+include(
+
+    ":app",
+
+    ":domain",
+
+    ":core:database",
+
+    ":feature:training"
+
+)
