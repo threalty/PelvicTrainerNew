@@ -62,11 +62,12 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
-    ksp(libs.hilt.compiler)  // ← KSP вместо kapt
+    ksp(libs.hilt.compiler)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
+    implementation("androidx.compose.material:material-icons-extended")  // ← ДОБАВЬ ЭТУ СТРОКУ
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime)
     debugImplementation(libs.compose.ui.tooling)
