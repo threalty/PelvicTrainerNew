@@ -1,4 +1,4 @@
-package com.pelvictrainer.feature.training
+package com.pelvictrainer.feature
 
 import com.pelvictrainer.domain.model.TrainingPhase
 import com.pelvictrainer.domain.model.TrainingPreset

@@ -1,9 +1,8 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt) // Добавлено
-    kotlin("kapt") // Оставлено для Hilt
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)  // ← Добавляем KSP
 }
 
 android {
@@ -12,34 +11,35 @@ android {
 
     defaultConfig {
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
-    buildFeatures {
-        buildConfig = true
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
     kotlin {
         jvmToolchain(17)
     }
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
+    implementation(project(":domain"))
 
-    // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
+    ksp(libs.room.compiler)  // ← KSP вместо kapt
 
-    // Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-
-    // DataStore (если используется в этом модуле)
-    implementation(libs.datastore.preferences)
+    ksp(libs.hilt.compiler)  // ← KSP вместо kapt
 }

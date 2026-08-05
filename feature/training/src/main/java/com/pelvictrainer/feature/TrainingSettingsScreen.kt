@@ -27,9 +27,9 @@ import com.pelvictrainer.domain.model.DefaultTrainingPresets
 import com.pelvictrainer.domain.model.TrainingPreset
 
 private val trainingPresets = listOf(
-    DefaultTrainingPresets.beginnerPreset,
-    DefaultTrainingPresets.intermediatePreset,
-    DefaultTrainingPresets.advancedPreset
+    DefaultTrainingPresets.getBeginner(),
+    DefaultTrainingPresets.getIntermediate(),
+    DefaultTrainingPresets.getAdvanced()
 )
 
 @Composable
@@ -81,10 +81,18 @@ fun TrainingSettingsScreen(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
+                            text = preset.description,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
                             text = "${preset.squeezeTime} сек сжатие • " +
                                     "${preset.holdTime} сек удержание • " +
                                     "${preset.relaxTime} сек расслабление • " +
-                                    "${preset.totalReps} повторов"
+                                    "${preset.totalReps} повторов",
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 }

@@ -24,7 +24,9 @@ fun AppNavigation(navController: NavHostController) {
         }
         composable(
             route = "training/{presetId}",
-            arguments = listOf(navArgument("presetId") { type = NavType.LongType }),
+            arguments = listOf(
+                navArgument("presetId") { type = NavType.LongType }
+            ),
         ) { backStack ->
             val presetId = backStack.arguments?.getLong("presetId") ?: 0L
             TrainingScreen(

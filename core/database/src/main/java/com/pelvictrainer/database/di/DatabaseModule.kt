@@ -23,15 +23,13 @@ object DatabaseModule {
         return Room.databaseBuilder(
             context,
             PelvicDatabase::class.java,
-            "pelvic_database"
+            "pelvic_trainer.db"
         ).build()
     }
 
     @Provides
     @Singleton
-    fun providePresetDao(database: PelvicDatabase): TrainingDao = database.trainingDao()
-
-    @Provides
-    @Singleton
-    fun provideTrainingSessionDao(database: PelvicDatabase): TrainingDao = database.trainingDao()
+    fun provideTrainingDao(database: PelvicDatabase): TrainingDao {
+        return database.trainingDao()
+    }
 }

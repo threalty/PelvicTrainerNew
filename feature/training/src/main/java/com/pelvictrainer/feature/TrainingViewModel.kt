@@ -1,4 +1,4 @@
-package com.pelvictrainer.feature.training
+package com.pelvictrainer.feature
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,8 +28,6 @@ class TrainingViewModel @Inject constructor(
     fun loadPreset(presetId: Long) {
         viewModelScope.launch {
             try {
-                // Предполагаем, что репозиторий может вернуть пресет по ID
-                // Если метода getPresetById нет, нужно использовать getPresets().first().find { it.id == presetId }
                 val preset = repository.getPresetById(presetId)
                 currentPreset = preset
                 _uiState.value = TrainingUiState.Ready(preset)
@@ -82,7 +80,6 @@ class TrainingViewModel @Inject constructor(
                     else -> break
                 }
 
-                // Обновляем состояние в процессе
                 if (currentRepCount >= 0) {
                     updateUiState()
                 }
@@ -117,7 +114,7 @@ class TrainingViewModel @Inject constructor(
             repository.saveTrainingSession(
                 presetId = currentPreset?.id ?: 0L,
                 completedReps = currentPreset?.totalReps ?: 0,
-                durationSeconds = 0L // Здесь можно рассчитать реальную длительность
+                durationSeconds = 0L
             )
             _uiState.value = TrainingUiState.Finished(currentPreset!!)
         }

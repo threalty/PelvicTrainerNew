@@ -1,38 +1,13 @@
 package com.pelvictrainer.datastore
 
-
-import androidx.datastore.core.DataStore
-
-import androidx.datastore.preferences.core.Preferences
-
+import com.pelvictrainer.domain.model.TrainingLevel
+import com.pelvictrainer.domain.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
 
-
-
 interface PelvicDataStore {
-
-
-    val userPreferences: Flow<UserPreferences>
-
-
-    val trainingSettings: Flow<TrainingSettings>
-
-
-
-    suspend fun updateOnboardingCompleted(
-        completed: Boolean
-    )
-
-
-
-    suspend fun updateTrainingLevel(
-        level: TrainingLevel
-    )
-
-
-
-    suspend fun updateTrainingSettings(
-        settings: TrainingSettings
-    )
-
+    fun getUserPreferences(): Flow<UserPreferences>
+    fun getTrainingLevel(): Flow<TrainingLevel?>
+    fun isOnboardingCompleted(): Flow<Boolean>
+    suspend fun updateTrainingLevel(level: TrainingLevel)
+    suspend fun completeOnboarding()
 }

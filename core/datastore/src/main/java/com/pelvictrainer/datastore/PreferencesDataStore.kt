@@ -1,206 +1,70 @@
 package com.pelvictrainer.datastore
 
-
-import androidx.datastore.core.DataStore
-
+import android.content.Context
 import androidx.datastore.preferences.core.Preferences
-
 import androidx.datastore.preferences.core.booleanPreferencesKey
-
-import androidx.datastore.preferences.core.intPreferencesKey
-
-import androidx.datastore.preferences.core.stringPreferencesKey
-
 import androidx.datastore.preferences.core.edit
-
-
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import com.pelvictrainer.domain.model.TrainingLevel
+import com.pelvictrainer.domain.model.UserPreferences
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
-
 import kotlinx.coroutines.flow.map
-
-
 import javax.inject.Inject
+import javax.inject.Singleton
 
+private val Context.dataStore by preferencesDataStore(name = "pelvic_prefs")
 
-
+@Singleton
 class PreferencesDataStore @Inject constructor(
-
-    private val dataStore: DataStore<Preferences>
-
+    @ApplicationContext private val context: Context
 ) : PelvicDataStore {
 
+    private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
+    private val TRAINING_LEVEL_KEY = stringPreferencesKey("training_level")
+    private val USER_AGE_KEY = intPreferencesKey("user_age")
 
-
-    companion object {
-
-
-        private val ONBOARDING_KEY =
-            booleanPreferencesKey(
-                "onboarding_completed"
-            )
-
-
-        private val AGE_KEY =
-            intPreferencesKey(
-                "user_age"
-            )
-
-
-        private val LEVEL_KEY =
-            stringPreferencesKey(
-                "training_level"
-            )
-
-
-        private val GOAL_KEY =
-            intPreferencesKey(
-                "daily_goal_minutes"
-            )
-
-
-        private val REMINDER_ENABLED_KEY =
-            booleanPreferencesKey(
-                "reminder_enabled"
-            )
-
-
-        private val REMINDER_HOUR_KEY =
-            intPreferencesKey(
-                "reminder_hour"
-            )
-
-
-        private val REMINDER_MINUTE_KEY =
-            intPreferencesKey(
-                "reminder_minute"
-            )
-
-    }
-
-
-
-    override val userPreferences: Flow<UserPreferences> =
-
-        dataStore.data.map { preferences ->
-
-
+    override fun getUserPreferences(): Flow<UserPreferences> {
+        return context.dataStore.data.map { preferences ->
             UserPreferences(
-
-                isOnboardingCompleted =
-                    preferences[ONBOARDING_KEY] ?: false,
-
-
-                userAge =
-                    preferences[AGE_KEY],
-
-
-                trainingLevel =
-                    TrainingLevel.valueOf(
-
-                        preferences[LEVEL_KEY]
-                            ?: TrainingLevel.BEGINNER.name
-
-                    )
-
+                isOnboardingCompleted = preferences[ONBOARDING_COMPLETED_KEY] ?: false,
+                trainingLevel = preferences[TRAINING_LEVEL_KEY]?.let {
+                    TrainingLevel.valueOf(it)
+                } ?: TrainingLevel.BEGINNER,
+                userAge = preferences[USER_AGE_KEY]
             )
-
         }
-
-
-
-    override val trainingSettings: Flow<TrainingSettings> =
-
-        dataStore.data.map { preferences ->
-
-
-            TrainingSettings(
-
-                dailyGoalMinutes =
-                    preferences[GOAL_KEY] ?: 10,
-
-
-                reminderEnabled =
-                    preferences[REMINDER_ENABLED_KEY]
-                        ?: false,
-
-
-                reminderHour =
-                    preferences[REMINDER_HOUR_KEY]
-                        ?: 20,
-
-
-                reminderMinute =
-                    preferences[REMINDER_MINUTE_KEY]
-                        ?: 0
-
-            )
-
-        }
-
-
-
-    override suspend fun updateOnboardingCompleted(
-        completed: Boolean
-    ) {
-
-
-        dataStore.edit { preferences ->
-
-
-            preferences[ONBOARDING_KEY] =
-                completed
-
-
-        }
-
     }
 
-
-
-    override suspend fun updateTrainingLevel(
-        level: TrainingLevel
-    ) {
-
-
-        dataStore.edit { preferences ->
-
-
-            preferences[LEVEL_KEY] =
-                level.name
-
-
+    override fun getTrainingLevel(): Flow<TrainingLevel?> {
+        return context.dataStore.data.map { preferences ->
+            preferences[TRAINING_LEVEL_KEY]?.let {
+                try {
+                    TrainingLevel.valueOf(it)
+                } catch (e: IllegalArgumentException) {
+                    null
+                }
+            }
         }
-
     }
 
-
-
-    override suspend fun updateTrainingSettings(
-        settings: TrainingSettings
-    ) {
-
-
-        dataStore.edit { preferences ->
-
-
-            preferences[GOAL_KEY] =
-                settings.dailyGoalMinutes
-
-
-            preferences[REMINDER_ENABLED_KEY] =
-                settings.reminderEnabled
-
-
-            preferences[REMINDER_HOUR_KEY] =
-                settings.reminderHour
-
-
-            preferences[REMINDER_MINUTE_KEY] =
-                settings.reminderMinute
-
-
+    override fun isOnboardingCompleted(): Flow<Boolean> {
+        return context.dataStore.data.map { preferences ->
+            preferences[ONBOARDING_COMPLETED_KEY] ?: false
         }
-
     }
 
+    override suspend fun updateTrainingLevel(level: TrainingLevel) {
+        context.dataStore.edit { preferences ->
+            preferences[TRAINING_LEVEL_KEY] = level.name
+        }
+    }
+
+    override suspend fun completeOnboarding() {
+        context.dataStore.edit { preferences ->
+            preferences[ONBOARDING_COMPLETED_KEY] = true
+        }
+    }
 }
