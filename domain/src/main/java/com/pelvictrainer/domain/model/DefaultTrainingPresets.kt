@@ -1,50 +1,42 @@
 package com.pelvictrainer.domain.model
 
-
 object DefaultTrainingPresets {
 
+    fun getPresetsForLevel(level: TrainingLevel): List<TrainingPreset> {
+        return when (level) {
+            TrainingLevel.BEGINNER -> listOf(beginnerPreset)
+            TrainingLevel.INTERMEDIATE -> listOf(intermediatePreset)
+            TrainingLevel.ADVANCED -> listOf(advancedPreset)
+        }
+    }
 
-    val beginner =
-        TrainingPreset(
-            id = "beginner",
-            name = "Начальный",
-            description = "Адаптация и контроль мышц",
-            contractSeconds = 3,
-            holdSeconds = 3,
-            relaxSeconds = 5,
-            repeats = 8
-        )
+    val beginnerPreset = TrainingPreset(
+        id = 1L,
+        name = "Начинающий",
+        level = TrainingLevel.BEGINNER,
+        squeezeTime = 3,
+        holdTime = 3,
+        relaxTime = 5,
+        totalReps = 10
+    )
 
+    val intermediatePreset = TrainingPreset(
+        id = 2L,
+        name = "Средний",
+        level = TrainingLevel.INTERMEDIATE,
+        squeezeTime = 5,
+        holdTime = 5,
+        relaxTime = 5,
+        totalReps = 15
+    )
 
-    val normal =
-        TrainingPreset(
-            id = "normal",
-            name = "Стандарт",
-            description = "Основная ежедневная тренировка",
-            contractSeconds = 5,
-            holdSeconds = 5,
-            relaxSeconds = 5,
-            repeats = 10
-        )
-
-
-    val advanced =
-        TrainingPreset(
-            id = "advanced",
-            name = "Продвинутый",
-            description = "Максимальная нагрузка",
-            contractSeconds = 7,
-            holdSeconds = 7,
-            relaxSeconds = 5,
-            repeats = 12
-        )
-
-
-    val all =
-        listOf(
-            beginner,
-            normal,
-            advanced
-        )
-
+    val advancedPreset = TrainingPreset(
+        id = 3L,
+        name = "Продвинутый",
+        level = TrainingLevel.ADVANCED,
+        squeezeTime = 10,
+        holdTime = 10,
+        relaxTime = 5,
+        totalReps = 20
+    )
 }

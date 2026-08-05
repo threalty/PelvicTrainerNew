@@ -1,39 +1,19 @@
-package com.pelvictrainer.feature
+package com.pelvictrainer.feature.training
 
+import com.pelvictrainer.domain.model.TrainingPhase
+import com.pelvictrainer.domain.model.TrainingPreset
 
-
-data class TrainingUiState(
-
-    val phase: TrainingPhase = TrainingPhase.CONTRACT,
-
-    val secondsLeft: Int = 0,
-
-    val phaseDuration: Int = 0,
-
-    val currentRepeat: Int = 0,
-
-    val totalRepeats: Int = 0,
-
-    val isRunning: Boolean = false,
-
-    val completed: Boolean = false
-
-)
-
-
-
-enum class TrainingPhase {
-
-
-    CONTRACT,
-
-
-    HOLD,
-
-
-    RELAX,
-
-
-    COMPLETE
-
+sealed class TrainingUiState {
+    object Loading : TrainingUiState()
+    data class Ready(val preset: TrainingPreset) : TrainingUiState()
+    data class Training(
+        val preset: TrainingPreset,
+        val phase: TrainingPhase,
+        val progress: Float,
+        val timeLeft: Int,
+        val repsLeft: Int,
+        val currentRep: Int
+    ) : TrainingUiState()
+    data class Finished(val preset: TrainingPreset) : TrainingUiState()
+    data class Error(val message: String) : TrainingUiState()
 }

@@ -1,21 +1,11 @@
 package com.pelvictrainer.domain.model
 
-
-
 data class TrainingPreset(
-
-    val id: String,
-
+    val id: Long,
     val name: String,
-
-    val description: String,
-
-    val contractSeconds: Int,
-
-    val holdSeconds: Int,
-
-    val relaxSeconds: Int,
-
-    val repeats: Int
-
+    val level: TrainingLevel,
+    val squeezeTime: Int,      // Время сжатия (сек)
+    val holdTime: Int,         // Время удержания (сек)
+    val relaxTime: Int,        // Время расслабления (сек)
+    val totalReps: Int         // Количество повторений
 )

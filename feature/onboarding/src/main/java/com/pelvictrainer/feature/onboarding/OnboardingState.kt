@@ -1,19 +1,8 @@
 package com.pelvictrainer.feature.onboarding
 
-
-import com.pelvictrainer.datastore.TrainingLevel
-
-
+import com.pelvictrainer.domain.model.TrainingLevel
 
 data class OnboardingState(
-
-    val selectedLevel: TrainingLevel =
-        TrainingLevel.BEGINNER,
-
-
-    val completed: Boolean = false,
-
-
-    val loading: Boolean = false
-
+    val selectedLevel: TrainingLevel? = null,
+    val isCompleted: Boolean = false
 )

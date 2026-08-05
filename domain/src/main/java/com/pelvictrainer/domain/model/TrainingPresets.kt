@@ -1,50 +1,38 @@
 package com.pelvictrainer.domain.model
 
-
 object TrainingPresets {
 
-
-    val beginner =
+    val allPresets = listOf(
         TrainingPreset(
-            id = "beginner",
-            name = "Начальный",
-            description = "Мягкая тренировка для привыкания",
-            contractSeconds = 3,
-            holdSeconds = 3,
-            relaxSeconds = 5,
-            repeats = 8
-        )
-
-
-    val standard =
+            id = 1L,
+            name = "Начинающий",
+            level = TrainingLevel.BEGINNER,
+            squeezeTime = 3,
+            holdTime = 3,
+            relaxTime = 5,
+            totalReps = 10
+        ),
         TrainingPreset(
-            id = "standard",
-            name = "Стандарт",
-            description = "Базовая ежедневная тренировка",
-            contractSeconds = 5,
-            holdSeconds = 5,
-            relaxSeconds = 5,
-            repeats = 10
-        )
-
-
-    val advanced =
+            id = 2L,
+            name = "Средний",
+            level = TrainingLevel.INTERMEDIATE,
+            squeezeTime = 5,
+            holdTime = 5,
+            relaxTime = 5,
+            totalReps = 15
+        ),
         TrainingPreset(
-            id = "advanced",
-            name = "Продвинутая",
-            description = "Усиленный режим",
-            contractSeconds = 7,
-            holdSeconds = 7,
-            relaxSeconds = 5,
-            repeats = 12
+            id = 3L,
+            name = "Продвинутый",
+            level = TrainingLevel.ADVANCED,
+            squeezeTime = 10,
+            holdTime = 10,
+            relaxTime = 5,
+            totalReps = 20
         )
+    )
 
-
-    val all =
-        listOf(
-            beginner,
-            standard,
-            advanced
-        )
-
+    fun getById(id: Long): TrainingPreset? {
+        return allPresets.find { it.id == id }
+    }
 }

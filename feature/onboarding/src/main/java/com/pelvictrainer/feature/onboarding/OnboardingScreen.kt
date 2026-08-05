@@ -1,173 +1,65 @@
 package com.pelvictrainer.feature.onboarding
 
-
-import androidx.compose.foundation.layout.Arrangement
-
-import androidx.compose.foundation.layout.Column
-
-import androidx.compose.foundation.layout.Spacer
-
-import androidx.compose.foundation.layout.fillMaxSize
-
-import androidx.compose.foundation.layout.height
-
-
-import androidx.compose.material3.Button
-
-import androidx.compose.material3.MaterialTheme
-
-import androidx.compose.material3.RadioButton
-
-import androidx.compose.material3.Text
-
-
-import androidx.compose.runtime.Composable
-
-import androidx.compose.runtime.collectAsState
-
-import androidx.compose.runtime.getValue
-
-
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-
 import androidx.compose.ui.Modifier
-
 import androidx.compose.ui.unit.dp
-
-
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pelvictrainer.domain.model.TrainingLevel
 
-
-import com.pelvictrainer.datastore.TrainingLevel
-
-
-
+@OptIn(ExperimentalMaterial3Api::class) // <--- Добавьте эту строку
 @Composable
-
 fun OnboardingScreen(
-
-    viewModel: OnboardingViewModel = hiltViewModel(),
-
-    onCompleted: () -> Unit
-
+    onFinish: () -> Unit,
+    viewModel: OnboardingViewModel = hiltViewModel()
 ) {
+    val state by viewModel.uiState.collectAsState()
 
-
-    val state by viewModel.state.collectAsState()
-
-
-
-    Column(
-
-        modifier = Modifier.fillMaxSize(),
-
-        verticalArrangement = Arrangement.Center,
-
-        horizontalAlignment = Alignment.CenterHorizontally
-
-    ) {
-
-
-
-        Text(
-
-            text = "PelvicTrainer",
-
-            style = MaterialTheme.typography.headlineLarge
-
-        )
-
-
-
-        Spacer(
-
-            modifier = Modifier.height(32.dp)
-
-        )
-
-
-
-        Text(
-
-            text = "Выберите уровень"
-
-        )
-
-
-
-        TrainingLevel.values().forEach { level ->
-
-
-
-            Column {
-
-
-
-                RadioButton(
-
-                    selected =
-
-                        state.selectedLevel == level,
-
-
-                    onClick = {
-
-                        viewModel.selectLevel(
-                            level
-                        )
-
-                    }
-
-                )
-
-
-                Text(
-
-                    text = level.name
-
-                )
-
-
-            }
-
+    if (state.isCompleted) {
+        LaunchedEffect(Unit) {
+            onFinish()
         }
-
-
-
-        Spacer(
-
-            modifier = Modifier.height(24.dp)
-
-        )
-
-
-
-        Button(
-
-            onClick = {
-
-
-                viewModel.complete()
-
-
-
-                onCompleted()
-
-            }
-
-        ) {
-
-
-            Text(
-
-                text = "Начать"
-
-            )
-
-
-        }
-
-
     }
 
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("Настройка профиля") })
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Выберите уровень сложности")
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TrainingLevel.values().forEach { level ->
+                    FilterChip(
+                        selected = state.selectedLevel == level,
+                        onClick = { viewModel.selectLevel(level) },
+                        label = { Text(level.name) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = { viewModel.finishOnboarding() },
+                    enabled = state.selectedLevel != null
+                ) {
+                    Text("Готово")
+                }
+            }
+        }
+    }
 }

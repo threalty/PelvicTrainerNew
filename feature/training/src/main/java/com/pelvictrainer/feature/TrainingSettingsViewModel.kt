@@ -1,10 +1,8 @@
-package com.pelvictrainer.feature
-
+package com.pelvictrainer.feature.training // Или com.pelvictrainer.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.model.TrainingLevel
-import com.pelvictrainer.domain.model.TrainingPreset
 import com.pelvictrainer.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,144 +11,56 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-
-
 @HiltViewModel
 class TrainingSettingsViewModel @Inject constructor(
-
     private val userPreferencesRepository: UserPreferencesRepository
-
 ) : ViewModel() {
 
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-
-    private val presets = defaultPresets()
-
-
-    private val _state = MutableStateFlow(
-
-        TrainingSettingsState(
-
-            presets = presets,
-
-            selectedPreset = presets.firstOrNull()
-
-        )
-
-    )
-
-
-    val state: StateFlow<TrainingSettingsState> =
-        _state.asStateFlow()
-
-
-
-    fun selectPreset(
-        preset: TrainingPreset
-    ) {
-
-        _state.value =
-            _state.value.copy(
-                selectedPreset = preset
-            )
-
+    init {
+        loadSettings()
     }
 
-
-
-    fun setTrainingLevel(
-        level: TrainingLevel
-    ) {
-
+    private fun loadSettings() {
         viewModelScope.launch {
-
-            userPreferencesRepository
-                .setTrainingLevel(level)
-
+            // Загрузка уровня
+            launch {
+                userPreferencesRepository.getTrainingLevel().collect { level ->
+                    _uiState.value = _uiState.value.copy(
+                        currentLevel = level ?: TrainingLevel.BEGINNER
+                    )
+                }
+            }
+            // Загрузка статуса уведомлений (если есть такой метод в репозитории)
+            // Если метода getNotificationsEnabled нет, закомментируйте этот блок
+            /*
+            launch {
+                userPreferencesRepository.getNotificationsEnabled().collect { enabled ->
+                    _uiState.value = _uiState.value.copy(notificationsEnabled = enabled)
+                }
+            }
+            */
         }
-
     }
 
-
-
-    fun setNotificationsEnabled(
-        enabled: Boolean
-    ) {
-
+    fun updateTrainingLevel(level: TrainingLevel) {
         viewModelScope.launch {
-
-            userPreferencesRepository
-                .setNotificationsEnabled(enabled)
-
+            userPreferencesRepository.updateTrainingLevel(level)
         }
-
     }
 
-
-
-    private fun defaultPresets(): List<TrainingPreset> = listOf(
-
-
-        TrainingPreset(
-
-            id = "beginner",
-
-            name = "Начальный",
-
-            description = "Лёгкая тренировка",
-
-            contractSeconds = 3,
-
-            holdSeconds = 3,
-
-            relaxSeconds = 5,
-
-            repeats = 10
-
-        ),
-
-
-
-        TrainingPreset(
-
-            id = "medium",
-
-            name = "Средний",
-
-            description = "Стандартная тренировка",
-
-            contractSeconds = 5,
-
-            holdSeconds = 5,
-
-            relaxSeconds = 5,
-
-            repeats = 15
-
-        ),
-
-
-
-        TrainingPreset(
-
-            id = "advanced",
-
-            name = "Продвинутый",
-
-            description = "Интенсивная тренировка",
-
-            contractSeconds = 8,
-
-            holdSeconds = 8,
-
-            relaxSeconds = 5,
-
-            repeats = 20
-
-        )
-
-
-    )
-
-
+    fun toggleNotifications(enabled: Boolean) {
+        viewModelScope.launch {
+            // Убедитесь, что этот метод существует в UserPreferencesRepository
+            // Если нет, создайте его аналогично updateTrainingLevel
+            // userPreferencesRepository.updateNotificationsEnabled(enabled)
+        }
+    }
 }
+
+data class SettingsUiState(
+    val currentLevel: TrainingLevel = TrainingLevel.BEGINNER,
+    val notificationsEnabled: Boolean = true
+)
