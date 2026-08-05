@@ -1,87 +1,68 @@
 package com.pelvictrainer.data.repository
 
-
 import com.pelvictrainer.data.mapper.toDomain
 import com.pelvictrainer.data.mapper.toEntity
-
 import com.pelvictrainer.database.dao.TrainingDao
-
+import com.pelvictrainer.domain.model.DefaultTrainingPresets
+import com.pelvictrainer.domain.model.TrainingLevel
+import com.pelvictrainer.domain.model.TrainingPreset
 import com.pelvictrainer.domain.model.TrainingSession
 import com.pelvictrainer.domain.repository.TrainingRepository
-
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-
 import javax.inject.Inject
 import javax.inject.Singleton
-
-
 
 @Singleton
 class TrainingRepositoryImpl @Inject constructor(
     private val dao: TrainingDao
 ) : TrainingRepository {
 
-
-
-    override fun getSessions():
-            Flow<List<TrainingSession>> {
-
-
-        return dao.getSessions()
-            .map { list ->
-
-                list.map {
-                    it.toDomain()
-                }
-
-            }
-
+    override fun getPresets(): Flow<List<TrainingPreset>> {
+        // Пока возвращаем все пресеты из дефолтного списка.
+        // В будущем можно брать из Room или комбинировать с пользовательскими.
+        return kotlinx.coroutines.flow.flow {
+            emit(
+                listOf(
+                    DefaultTrainingPresets.beginnerPreset,
+                    DefaultTrainingPresets.intermediatePreset,
+                    DefaultTrainingPresets.advancedPreset
+                )
+            )
+        }
     }
 
+    override suspend fun getPresetById(id: Long): TrainingPreset {
+        return when (id) {
+            1L -> DefaultTrainingPresets.beginnerPreset
+            2L -> DefaultTrainingPresets.intermediatePreset
+            3L -> DefaultTrainingPresets.advancedPreset
+            else -> throw IllegalArgumentException("Preset $id not found")
+        }
+    }
 
+    override fun getSessions(): Flow<List<TrainingSession>> =
+        dao.getSessions().map { list -> list.map { it.toDomain() } }
 
+    override suspend fun saveSession(session: TrainingSession) {
+        dao.insertSession(session.toEntity())
+    }
 
-    override suspend fun saveSession(
-        session: TrainingSession
+    override suspend fun saveTrainingSession(
+        presetId: Long,
+        completedReps: Int,
+        durationSeconds: Long
     ) {
-
-
-        dao.insertSession(
-            session.toEntity()
+        saveSession(
+            TrainingSession(
+                id = 0L,
+                presetId = presetId,
+                date = System.currentTimeMillis(),
+                durationSeconds = durationSeconds,
+                repeats = completedReps
+            )
         )
-
-
     }
 
-
-
-
-    override suspend fun deleteAll() {
-
-        dao.deleteAll()
-
-    }
-
-
-
-
-    override suspend fun startSession() {
-
-    }
-
-
-
-
-    override suspend fun completeSession(
-        session: TrainingSession
-    ) {
-
-
-        saveSession(session)
-
-
-    }
-
-
+    override suspend fun deleteAllSessions() = dao.deleteAll()
 }

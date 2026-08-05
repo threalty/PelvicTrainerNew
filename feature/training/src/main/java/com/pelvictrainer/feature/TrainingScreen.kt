@@ -124,7 +124,7 @@ private fun TrainingContent(
         Text(
             text = getInstructionText(phase, timeLeft),
             style = MaterialTheme.typography.titleLarge,
-            color = getPhaseColor(phase)
+            color = phaseColor(phase)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -250,11 +250,11 @@ private fun TrainingFinishedContent(
 
 private fun getInstructionText(phase: TrainingPhase, timeLeft: Int): String {
     return when (phase) {
-        TrainingPhase.IDLE -> "Нажмите кнопку начала"
-        TrainingPhase.SQUEEZE -> "Сжать! ($timeLeft сек)"
-        TrainingPhase.HOLD -> "Держать! ($timeLeft сек)"
-        TrainingPhase.RELAX -> "Расслабить! ($timeLeft сек)"
-        TrainingPhase.FINISHED -> "Отдых"
+        TrainingPhase.IDLE -> "Нажмите кнопку чтобы начать"
+        TrainingPhase.SQUEEZE -> "Сжимайте! ($timeLeft сек)"
+        TrainingPhase.HOLD -> "Держите! ($timeLeft сек)"
+        TrainingPhase.RELAX -> "Расслабьтесь ($timeLeft сек)"
+        TrainingPhase.FINISHED -> "Отлично!"
     }
 }
 
@@ -262,10 +262,3 @@ private fun getInstructionText(phase: TrainingPhase, timeLeft: Int): String {
 // Цвет передается из контекста вызова (TrainingRing), где MaterialTheme доступен.
 // Однако для совместимости со старым кодом в TrainingContent, оставим её,
 // но учтите, что она должна вызываться только внутри @Composable.
-@Composable
-private fun getPhaseColor(phase: TrainingPhase) = when (phase) {
-    TrainingPhase.SQUEEZE -> MaterialTheme.colorScheme.primary
-    TrainingPhase.HOLD -> MaterialTheme.colorScheme.secondary
-    TrainingPhase.RELAX -> MaterialTheme.colorScheme.tertiary
-    else -> MaterialTheme.colorScheme.onSurface
-}
