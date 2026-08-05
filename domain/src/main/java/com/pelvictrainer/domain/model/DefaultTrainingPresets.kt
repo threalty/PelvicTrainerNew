@@ -2,17 +2,10 @@ package com.pelvictrainer.domain.model
 
 object DefaultTrainingPresets {
 
-    fun getPresetsForLevel(level: TrainingLevel): List<TrainingPreset> {
-        return when (level) {
-            TrainingLevel.BEGINNER -> listOf(beginnerPreset)
-            TrainingLevel.INTERMEDIATE -> listOf(intermediatePreset)
-            TrainingLevel.ADVANCED -> listOf(advancedPreset)
-        }
-    }
-
-    val beginnerPreset = TrainingPreset(
+    fun getBeginner(): TrainingPreset = TrainingPreset(
         id = 1L,
-        name = "Начинающий",
+        name = "Новичок",
+        description = "Базовый уровень для начала тренировок",
         level = TrainingLevel.BEGINNER,
         squeezeTime = 3,
         holdTime = 3,
@@ -20,9 +13,10 @@ object DefaultTrainingPresets {
         totalReps = 10
     )
 
-    val intermediatePreset = TrainingPreset(
+    fun getIntermediate(): TrainingPreset = TrainingPreset(
         id = 2L,
-        name = "Средний",
+        name = "Любитель",
+        description = "Средний уровень сложности",
         level = TrainingLevel.INTERMEDIATE,
         squeezeTime = 5,
         holdTime = 5,
@@ -30,13 +24,20 @@ object DefaultTrainingPresets {
         totalReps = 15
     )
 
-    val advancedPreset = TrainingPreset(
+    fun getAdvanced(): TrainingPreset = TrainingPreset(
         id = 3L,
-        name = "Продвинутый",
+        name = "Профи",
+        description = "Максимальная нагрузка",
         level = TrainingLevel.ADVANCED,
-        squeezeTime = 10,
-        holdTime = 10,
-        relaxTime = 5,
+        squeezeTime = 8,
+        holdTime = 8,
+        relaxTime = 4,
         totalReps = 20
+    )
+
+    fun getAll(): List<TrainingPreset> = listOf(
+        getBeginner(),
+        getIntermediate(),
+        getAdvanced()
     )
 }
