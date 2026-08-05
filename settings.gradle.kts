@@ -29,8 +29,9 @@ include(":core:network")
 include(":domain")
 
 include(":data")
-
+include(":feature:calendar")
 include(":feature:onboarding")
 include(":feature:training")
 include(":feature:statistics")
 include(":feature:settings")
+include(":feature:calendar")

@@ -1,20 +1,9 @@
 package com.pelvictrainer.app
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,6 +17,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.pelvictrainer.calendar.CalendarScreen
+import com.pelvictrainer.feature.TrainingSettingsScreen
 
 sealed class BottomNavItem(
     val route: String,
@@ -62,7 +53,7 @@ fun MainScreen(
                 HomeScreen(onStartTraining = onStartTraining)
             }
             composable(BottomNavItem.Calendar.route) {
-                PlaceholderScreen(title = "Календарь")
+                CalendarScreen()
             }
             composable(BottomNavItem.Statistics.route) {
                 PlaceholderScreen(title = "Статистика")
@@ -71,7 +62,7 @@ fun MainScreen(
                 PlaceholderScreen(title = "Достижения")
             }
             composable(BottomNavItem.Settings.route) {
-                PlaceholderScreen(title = "Настройки")
+                TrainingSettingsScreen(onStartTraining = { /* Не используется */ })
             }
         }
     }

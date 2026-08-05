@@ -51,6 +51,7 @@ dependencies {
     implementation(project(":feature:training"))
     implementation(project(":domain"))
     implementation(project(":data"))
+    implementation(project(":feature:calendar"))
     implementation(project(":core:common"))
     implementation(project(":core:database"))
     implementation(project(":core:datastore"))

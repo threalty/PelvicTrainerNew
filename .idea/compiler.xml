@@ -3,11 +3,4 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="17" />
   </component>
-  <component name="JavacSettings">
-    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="PelvicTrainer.domain" options="-proc:none" />
-      <module name="PelvicTrainer.domain.main" options="-proc:none" />
-      <module name="PelvicTrainer.domain.test" options="-proc:none" />
-    </option>
-  </component>
 </project>
