@@ -1,34 +1,34 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Gradle
+.gradle/
+build/
+**/build/
 local.properties
 
-# Project exclude paths
-/app/build/
-/app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/core/common/build/
-/core/common/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/core/database/build/
-/core/database/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/core/datastore/build/
-/core/datastore/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/core/designsystem/build/
-/core/designsystem/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/core/navigation/build/
-/core/navigation/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/core/network/build/
-/core/network/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/domain/build/
-/feature/training/build/
-/feature/training/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.navigation/
+captures/
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+
+# Build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak

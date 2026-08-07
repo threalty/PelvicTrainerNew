@@ -37,6 +37,7 @@ class TrainingHaptic @Inject constructor(
     @SuppressLint("MissingPermission")
     fun vibrateForPhase(phase: TrainingPhase) {
         if (!isEnabled || intensity <= 0f) return
+        if (vibrator?.hasVibrator() != true) return
 
         val durationMs = when (phase) {
             TrainingPhase.SQUEEZE -> 150L
@@ -47,14 +48,6 @@ class TrainingHaptic @Inject constructor(
         }
 
         val amplitude = (intensity * 255).toInt().coerceIn(1, 255)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(
-                VibrationEffect.createOneShot(durationMs, amplitude)
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(durationMs)
-        }
+        vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude))
     }
 }

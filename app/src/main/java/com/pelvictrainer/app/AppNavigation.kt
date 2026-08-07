@@ -1,7 +1,6 @@
 package com.pelvictrainer.app
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -15,7 +14,6 @@ import androidx.navigation.navArgument
 import com.pelvictrainer.domain.model.TrainingLevel
 import com.pelvictrainer.domain.repository.UserPreferencesRepository
 import com.pelvictrainer.feature.TrainingScreen
-import com.pelvictrainer.feature.TrainingSettingsScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -112,7 +110,8 @@ fun AppNavigation(
             MainScreen(
                 navController = navController,
                 onStartTraining = {
-                    // Переходим на экран выбора тренировки (пока используем первый пресет)
+                    // Переходим на экран тренировки с первым пресетом
+                    // Пресет будет выбран автоматически на основе сохранённого уровня
                     navController.navigate(Screen.Training.createRoute(1L))
                 }
             )
@@ -124,7 +123,7 @@ fun AppNavigation(
                 navArgument("presetId") { type = NavType.LongType }
             )
         ) { backStack ->
-            val presetId = backStack.arguments?.getLong("presetId") ?: 0L
+            val presetId = backStack.arguments?.getLong("presetId") ?: 1L
             TrainingScreen(
                 presetId = presetId,
                 onNavigateBack = { navController.popBackStack() }
