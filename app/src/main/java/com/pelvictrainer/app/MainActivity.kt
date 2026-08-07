@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PelvicTrainerTheme {
+            PelvicTrainerTheme(darkTheme = true) {
                 val navController = rememberNavController()
                 AppNavigation(navController = navController)
             }

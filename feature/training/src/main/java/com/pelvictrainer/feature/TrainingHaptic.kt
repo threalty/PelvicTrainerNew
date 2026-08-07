@@ -1,50 +1,60 @@
 package com.pelvictrainer.feature
 
-
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.annotation.SuppressLint
+import android.os.VibratorManager
+import com.pelvictrainer.domain.model.TrainingPhase
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-
-
-@SuppressLint("MissingPermission")
-fun phaseVibration(
-    context: Context
+@Singleton
+class TrainingHaptic @Inject constructor(
+    @ApplicationContext private val context: Context
 ) {
-
-
-    val vibrator =
-        context.getSystemService(
-            Vibrator::class.java
-        )
-
-
-    vibrator?.let {
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-
-            it.vibrate(
-                VibrationEffect.createOneShot(
-                    80,
-                    VibrationEffect.DEFAULT_AMPLITUDE
-                )
-            )
-
-
-        } else {
-
-
-            @Suppress("DEPRECATION")
-            it.vibrate(80)
-
-
-        }
-
-
+    private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        manager.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
+    private var intensity: Float = 0.8f
+    private var isEnabled: Boolean = true
+
+    fun setEnabled(enabled: Boolean) {
+        isEnabled = enabled
+    }
+
+    fun setIntensity(value: Float) {
+        intensity = value.coerceIn(0f, 1f)
+    }
+
+    @SuppressLint("MissingPermission")
+    fun vibrateForPhase(phase: TrainingPhase) {
+        if (!isEnabled || intensity <= 0f) return
+
+        val durationMs = when (phase) {
+            TrainingPhase.SQUEEZE -> 150L
+            TrainingPhase.HOLD -> 100L
+            TrainingPhase.RELAX -> 200L
+            TrainingPhase.FINISHED -> 400L
+            else -> return
+        }
+
+        val amplitude = (intensity * 255).toInt().coerceIn(1, 255)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(
+                VibrationEffect.createOneShot(durationMs, amplitude)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(durationMs)
+        }
+    }
 }

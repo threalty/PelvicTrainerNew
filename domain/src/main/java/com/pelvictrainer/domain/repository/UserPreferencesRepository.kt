@@ -1,5 +1,7 @@
 package com.pelvictrainer.domain.repository
 
+import com.pelvictrainer.domain.model.AccentColor
+import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.TrainingLevel
 import com.pelvictrainer.domain.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
@@ -10,4 +12,10 @@ interface UserPreferencesRepository {
     fun isOnboardingCompleted(): Flow<Boolean>
     suspend fun updateTrainingLevel(level: TrainingLevel)
     suspend fun completeOnboarding()
+    suspend fun updateThemeMode(mode: ThemeMode)
+    suspend fun updateAccentColor(color: AccentColor)
+    suspend fun updateVoiceEnabled(enabled: Boolean)
+    suspend fun updateVoiceVolume(volume: Float)
+    suspend fun updateVibrationEnabled(enabled: Boolean)
+    suspend fun updateVibrationIntensity(intensity: Float)
 }

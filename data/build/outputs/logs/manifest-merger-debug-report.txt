@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml:2:13-83
-INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml:2:13-83
+ADDED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml:2:13-83
+INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml:2:13-83
 	package
-		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml
+		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml
 	xmlns:android
-		ADDED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml:2:23-81
+		ADDED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml:2:23-81
 uses-sdk
-INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml reason: use-sdk injection requested
-INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml
-INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml
+INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml reason: use-sdk injection requested
+INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml
+INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml
 	android:targetSdkVersion
-		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml
+		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml
 	android:minSdkVersion
-		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest9204614901335516545.xml
+		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest5224559372221657900.xml

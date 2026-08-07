@@ -1,0 +1,143 @@
+package com.pelvictrainer.statistics
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.pelvictrainer.domain.model.TrainingSession
+import com.pelvictrainer.domain.repository.TrainingRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import javax.inject.Inject
+
+data class StatisticsUiState(
+    val totalSessions: Int = 0,
+    val totalDurationSeconds: Long = 0,
+    val currentStreak: Int = 0,
+    val bestStreak: Int = 0,
+    val averageDurationSeconds: Long = 0,
+    val last7DaysSessions: List<Pair<String, Int>> = emptyList() // (день недели, количество тренировок)
+)
+
+@HiltViewModel
+class StatisticsViewModel @Inject constructor(
+    private val trainingRepository: TrainingRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(StatisticsUiState())
+    val uiState: StateFlow<StatisticsUiState> = _uiState.asStateFlow()
+
+    init {
+        loadStatistics()
+    }
+
+    private fun loadStatistics() {
+        viewModelScope.launch {
+            trainingRepository.getSessions().collect { sessions ->
+                _uiState.value = calculateStatistics(sessions)
+            }
+        }
+    }
+
+    private fun calculateStatistics(sessions: List<TrainingSession>): StatisticsUiState {
+        if (sessions.isEmpty()) {
+            return StatisticsUiState(
+                last7DaysSessions = generateEmptyWeek()
+            )
+        }
+
+        val totalSessions = sessions.size
+        val totalDuration = sessions.sumOf { it.durationSeconds }
+        val averageDuration = totalDuration / totalSessions
+
+        // Считаем streak
+        val (currentStreak, bestStreak) = calculateStreaks(sessions)
+
+        // График за последние 7 дней
+        val last7Days = generateLast7DaysData(sessions)
+
+        return StatisticsUiState(
+            totalSessions = totalSessions,
+            totalDurationSeconds = totalDuration,
+            currentStreak = currentStreak,
+            bestStreak = bestStreak,
+            averageDurationSeconds = averageDuration,
+            last7DaysSessions = last7Days
+        )
+    }
+
+    private fun calculateStreaks(sessions: List<TrainingSession>): Pair<Int, Int> {
+        val trainingDates = sessions.map { session ->
+            LocalDate.ofEpochDay(session.date / (24 * 60 * 60 * 1000))
+        }.distinct().sortedDescending()
+
+        if (trainingDates.isEmpty()) return Pair(0, 0)
+
+        var currentStreak = 0
+        var bestStreak = 0
+        var tempStreak = 1
+
+        // Current streak - считаем с сегодняшнего дня или вчерашнего
+        val today = LocalDate.now()
+        val yesterday = today.minusDays(1)
+
+        if (trainingDates.first() == today || trainingDates.first() == yesterday) {
+            currentStreak = 1
+            for (i in 1 until trainingDates.size) {
+                val diff = java.time.temporal.ChronoUnit.DAYS.between(
+                    trainingDates[i],
+                    trainingDates[i - 1]
+                )
+                if (diff == 1L) {
+                    currentStreak++
+                } else {
+                    break
+                }
+            }
+        }
+
+        // Best streak
+        for (i in 1 until trainingDates.size) {
+            val diff = java.time.temporal.ChronoUnit.DAYS.between(
+                trainingDates[i],
+                trainingDates[i - 1]
+            )
+            if (diff == 1L) {
+                tempStreak++
+                bestStreak = maxOf(bestStreak, tempStreak)
+            } else {
+                tempStreak = 1
+            }
+        }
+
+        bestStreak = maxOf(bestStreak, currentStreak, if (trainingDates.isNotEmpty()) 1 else 0)
+
+        return Pair(currentStreak, bestStreak)
+    }
+
+    private fun generateLast7DaysData(sessions: List<TrainingSession>): List<Pair<String, Int>> {
+        val today = LocalDate.now()
+        val dayNames = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+
+        return (6 downTo 0).map { daysAgo ->
+            val date = today.minusDays(daysAgo.toLong())
+            val count = sessions.count { session ->
+                val sessionDate = LocalDate.ofEpochDay(session.date / (24 * 60 * 60 * 1000))
+                sessionDate == date
+            }
+            Pair(dayNames[(date.dayOfWeek.value - 1) % 7], count)
+        }
+    }
+
+    private fun generateEmptyWeek(): List<Pair<String, Int>> {
+        val today = LocalDate.now()
+        val dayNames = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+
+        return (6 downTo 0).map { daysAgo ->
+            val date = today.minusDays(daysAgo.toLong())
+            Pair(dayNames[(date.dayOfWeek.value - 1) % 7], 0)
+        }
+    }
+}
