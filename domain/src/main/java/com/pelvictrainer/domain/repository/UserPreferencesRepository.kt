@@ -1,6 +1,7 @@
 package com.pelvictrainer.domain.repository
 
 import com.pelvictrainer.domain.model.AccentColor
+import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.TrainingLevel
 import com.pelvictrainer.domain.model.UserPreferences
@@ -18,4 +19,10 @@ interface UserPreferencesRepository {
     suspend fun updateVoiceVolume(volume: Float)
     suspend fun updateVibrationEnabled(enabled: Boolean)
     suspend fun updateVibrationIntensity(intensity: Float)
+
+    // Напоминания
+    suspend fun updateRemindersEnabled(enabled: Boolean)
+    suspend fun addReminderTime(config: ReminderConfig)
+    suspend fun removeReminderTime(config: ReminderConfig)
+    suspend fun updateReminderDaysOfWeek(days: List<Int>)
 }

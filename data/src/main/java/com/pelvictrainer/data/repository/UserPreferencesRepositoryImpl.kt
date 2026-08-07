@@ -2,6 +2,7 @@ package com.pelvictrainer.data.repository
 
 import com.pelvictrainer.datastore.PelvicDataStore
 import com.pelvictrainer.domain.model.AccentColor
+import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.TrainingLevel
 import com.pelvictrainer.domain.model.UserPreferences
@@ -40,4 +41,17 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 
     override suspend fun updateVibrationIntensity(intensity: Float) =
         dataStore.updateVibrationIntensity(intensity)
+
+    // Напоминания
+    override suspend fun updateRemindersEnabled(enabled: Boolean) =
+        dataStore.updateRemindersEnabled(enabled)
+
+    override suspend fun addReminderTime(config: ReminderConfig) =
+        dataStore.addReminderTime(config)
+
+    override suspend fun removeReminderTime(config: ReminderConfig) =
+        dataStore.removeReminderTime(config)
+
+    override suspend fun updateReminderDaysOfWeek(days: List<Int>) =
+        dataStore.updateReminderDaysOfWeek(days)
 }

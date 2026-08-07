@@ -6,8 +6,10 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.pelvictrainer.domain.model.AccentColor
+import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.TrainingLevel
 import com.pelvictrainer.domain.model.UserPreferences
@@ -34,8 +36,21 @@ class PreferencesDataStore @Inject constructor(
     private val VIBRATION_ENABLED_KEY = booleanPreferencesKey("vibration_enabled")
     private val VIBRATION_INTENSITY_KEY = floatPreferencesKey("vibration_intensity")
 
+    // Ключи для напоминаний
+    private val REMINDERS_ENABLED_KEY = booleanPreferencesKey("reminders_enabled")
+    private val REMINDER_TIMES_KEY = stringSetPreferencesKey("reminder_times")
+    private val REMINDER_DAYS_KEY = stringPreferencesKey("reminder_days")
+
     override fun getUserPreferences(): Flow<UserPreferences> {
         return context.dataStore.data.map { prefs ->
+            val reminderTimes = prefs[REMINDER_TIMES_KEY]?.mapNotNull {
+                ReminderConfig.fromString(it)
+            } ?: emptyList()
+
+            val reminderDays = prefs[REMINDER_DAYS_KEY]?.split(",")?.mapNotNull {
+                it.trim().toIntOrNull()
+            }?.filter { it in 1..7 } ?: listOf(1, 2, 3, 4, 5, 6, 7)
+
             UserPreferences(
                 isOnboardingCompleted = prefs[ONBOARDING_COMPLETED_KEY] ?: false,
                 trainingLevel = prefs[TRAINING_LEVEL_KEY]?.let {
@@ -51,7 +66,10 @@ class PreferencesDataStore @Inject constructor(
                 voiceEnabled = prefs[VOICE_ENABLED_KEY] ?: true,
                 voiceVolume = prefs[VOICE_VOLUME_KEY] ?: 0.8f,
                 vibrationEnabled = prefs[VIBRATION_ENABLED_KEY] ?: true,
-                vibrationIntensity = prefs[VIBRATION_INTENSITY_KEY] ?: 0.8f
+                vibrationIntensity = prefs[VIBRATION_INTENSITY_KEY] ?: 0.8f,
+                remindersEnabled = prefs[REMINDERS_ENABLED_KEY] ?: false,
+                reminderTimes = reminderTimes,
+                reminderDaysOfWeek = reminderDays
             )
         }
     }
@@ -115,6 +133,36 @@ class PreferencesDataStore @Inject constructor(
     override suspend fun updateVibrationIntensity(intensity: Float) {
         context.dataStore.edit { prefs ->
             prefs[VIBRATION_INTENSITY_KEY] = intensity
+        }
+    }
+
+    // ============ НАПОМИНАНИЯ ============
+
+    override suspend fun updateRemindersEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[REMINDERS_ENABLED_KEY] = enabled
+        }
+    }
+
+    override suspend fun addReminderTime(config: ReminderConfig) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[REMINDER_TIMES_KEY]?.toMutableSet() ?: mutableSetOf()
+            current.add(config.formatTime())
+            prefs[REMINDER_TIMES_KEY] = current
+        }
+    }
+
+    override suspend fun removeReminderTime(config: ReminderConfig) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[REMINDER_TIMES_KEY]?.toMutableSet() ?: mutableSetOf()
+            current.remove(config.formatTime())
+            prefs[REMINDER_TIMES_KEY] = current
+        }
+    }
+
+    override suspend fun updateReminderDaysOfWeek(days: List<Int>) {
+        context.dataStore.edit { prefs ->
+            prefs[REMINDER_DAYS_KEY] = days.filter { it in 1..7 }.joinToString(",")
         }
     }
 }

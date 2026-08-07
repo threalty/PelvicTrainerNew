@@ -24,7 +24,6 @@ work = "2.10.0"
 ksp = "2.0.21-1.0.28"
 jetbrainsKotlinJvm = "2.0.21"
 
-
 [libraries]
 
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -37,7 +36,6 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 
-
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 
 compose-ui = { module = "androidx.compose.ui:ui", version.ref = "composeUi" }
@@ -46,13 +44,15 @@ compose-material3 = { module = "androidx.compose.material3:material3", version.r
 
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "composeUi" }
 
-
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigation" }
 
+hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltNavigation" }
+
+hilt-work-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltNavigation" }
 
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 
@@ -60,15 +60,11 @@ room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
-
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
-
 
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 
-
 junit = { module = "junit:junit", version = "4.13.2" }
-
 
 [plugins]
 

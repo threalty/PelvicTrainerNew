@@ -58,5 +58,8 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
 
+    // WorkManager для управления планировщиком
+    implementation(libs.work.runtime)
+
     debugImplementation(libs.compose.ui.tooling)
 }

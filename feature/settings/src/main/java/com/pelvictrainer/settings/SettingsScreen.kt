@@ -17,18 +17,27 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +68,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Секция: Тема
+            // ===== Секция: Внешний вид =====
             SettingsSection(title = "Внешний вид") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -125,7 +134,7 @@ fun SettingsScreen(
                 }
             }
 
-            // Секция: Тренировка
+            // ===== Секция: Тренировка =====
             SettingsSection(title = "Тренировка") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -190,7 +199,105 @@ fun SettingsScreen(
                 }
             }
 
-            // Секция: О приложении
+            // ===== Секция: Напоминания =====
+            SettingsSection(title = "Напоминания") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        SettingsToggleRow(
+                            title = "Ежедневные напоминания",
+                            description = "Уведомления о тренировках в выбранное время",
+                            checked = prefs.remindersEnabled,
+                            onCheckedChange = { viewModel.updateRemindersEnabled(it) }
+                        )
+
+                        if (prefs.remindersEnabled) {
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Список времён напоминаний
+                            Text(
+                                text = "Время напоминаний:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (prefs.reminderTimes.isEmpty()) {
+                                Text(
+                                    text = "Нет настроенных времён",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                            } else {
+                                prefs.reminderTimes.forEach { reminder ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "⏰ ${reminder.formatTime()}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        IconButton(
+                                            onClick = { viewModel.removeReminderTime(reminder) }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Удалить",
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Кнопка добавления времени
+                            AddTimeButton(
+                                onTimeSelected = { hour, minute ->
+                                    viewModel.addReminderTime(hour, minute)
+                                }
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Выбор дней недели
+                            Text(
+                                text = "Дни недели:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                val dayNames = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+                                dayNames.forEachIndexed { index, dayName ->
+                                    val day = index + 1
+                                    DayChip(
+                                        text = dayName,
+                                        isSelected = day in prefs.reminderDaysOfWeek,
+                                        onClick = { viewModel.toggleReminderDay(day) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ===== Секция: О приложении =====
             SettingsSection(title = "О приложении") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -325,5 +432,150 @@ private fun InfoRow(label: String, value: String) {
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+@Composable
+private fun DayChip(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surface
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun AddTimeButton(
+    onTimeSelected: (hour: Int, minute: Int) -> Unit
+) {
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    TextButton(
+        onClick = { showTimePicker = true }
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("Добавить время")
+    }
+
+    if (showTimePicker) {
+        TimePickerDialog(
+            onDismiss = { showTimePicker = false },
+            onConfirm = { hour, minute ->
+                onTimeSelected(hour, minute)
+                showTimePicker = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun TimePickerDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (hour: Int, minute: Int) -> Unit
+) {
+    var selectedHour by remember { mutableStateOf(9) }
+    var selectedMinute by remember { mutableStateOf(0) }
+
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Выберите время") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    TimePickerColumn(
+                        label = "Часы",
+                        value = selectedHour,
+                        maxValue = 23,
+                        onValueChange = { selectedHour = it }
+                    )
+                    Spacer(modifier = Modifier.width(24.dp))
+                    Text(
+                        text = ":",
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                    Spacer(modifier = Modifier.width(24.dp))
+                    TimePickerColumn(
+                        label = "Минуты",
+                        value = selectedMinute,
+                        maxValue = 59,
+                        onValueChange = { selectedMinute = it }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selectedHour, selectedMinute) }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Отмена")
+            }
+        }
+    )
+}
+
+@Composable
+private fun TimePickerColumn(
+    label: String,
+    value: Int,
+    maxValue: Int,
+    onValueChange: (Int) -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = {
+                if (value > 0) onValueChange(value - 1)
+            }) {
+                Text("▲", style = MaterialTheme.typography.titleMedium)
+            }
+            Text(
+                text = String.format("%02d", value),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            IconButton(onClick = {
+                if (value < maxValue) onValueChange(value + 1)
+            }) {
+                Text("▼", style = MaterialTheme.typography.titleMedium)
+            }
+        }
     }
 }

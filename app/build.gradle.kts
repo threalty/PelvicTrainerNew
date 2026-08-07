@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)  // ← KSP вместо kapt
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -68,10 +68,15 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
 
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.work.compiler)
+
+    implementation(libs.work.runtime)
+
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
-    implementation("androidx.compose.material:material-icons-extended")  // ← ДОБАВЬ ЭТУ СТРОКУ
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime)
     debugImplementation(libs.compose.ui.tooling)
