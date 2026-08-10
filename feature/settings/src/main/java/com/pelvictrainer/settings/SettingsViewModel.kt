@@ -54,8 +54,6 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { userPreferencesRepository.updateVibrationIntensity(intensity) }
     }
 
-    // ===== НАПОМИНАНИЯ =====
-
     fun updateRemindersEnabled(enabled: Boolean) {
         viewModelScope.launch { userPreferencesRepository.updateRemindersEnabled(enabled) }
     }
@@ -70,7 +68,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun removeReminderTime(config: ReminderConfig) {
-        viewModelScope.launch { userPreferencesRepository.removeReminderTime(config) }
+        viewModelScope.launch {
+            userPreferencesRepository.removeReminderTime(config)
+        }
     }
 
     fun toggleReminderDay(day: Int) {
@@ -82,6 +82,12 @@ class SettingsViewModel @Inject constructor(
                 currentDays.add(day)
             }
             userPreferencesRepository.updateReminderDaysOfWeek(currentDays.sorted())
+        }
+    }
+
+    fun updateWeeklyGoal(goal: Int) {
+        viewModelScope.launch {
+            userPreferencesRepository.updateWeeklyGoal(goal)
         }
     }
 }

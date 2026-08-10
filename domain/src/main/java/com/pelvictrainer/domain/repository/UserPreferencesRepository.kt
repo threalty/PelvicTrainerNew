@@ -20,9 +20,10 @@ interface UserPreferencesRepository {
     suspend fun updateVibrationEnabled(enabled: Boolean)
     suspend fun updateVibrationIntensity(intensity: Float)
 
-    // Напоминания
     suspend fun updateRemindersEnabled(enabled: Boolean)
     suspend fun addReminderTime(config: ReminderConfig)
     suspend fun removeReminderTime(config: ReminderConfig)
     suspend fun updateReminderDaysOfWeek(days: List<Int>)
+
+    suspend fun updateWeeklyGoal(goal: Int)
 }

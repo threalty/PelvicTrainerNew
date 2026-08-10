@@ -17,7 +17,12 @@ import javax.inject.Inject
 data class WorkoutsUiState(
     val presets: List<TrainingPreset> = emptyList(),
     val userLevel: TrainingLevel = TrainingLevel.BEGINNER,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val totalCompletedTrainings: Int = 0,
+    val trainingsNeededForNextLevel: Int = 0,
+    val trainingsDoneOnCurrentLevel: Int = 0,
+    val nextLevel: TrainingLevel? = null,
+    val progressToNextLevel: Float = 0f
 )
 
 @HiltViewModel
@@ -26,8 +31,16 @@ class WorkoutsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val INTERMEDIATE_THRESHOLD = 10
+        private const val ADVANCED_THRESHOLD = 30
+    }
+
     private val _uiState = MutableStateFlow(WorkoutsUiState())
     val uiState: StateFlow<WorkoutsUiState> = _uiState.asStateFlow()
+
+    private val _levelUpEvent = MutableStateFlow<TrainingLevel?>(null)
+    val levelUpEvent: StateFlow<TrainingLevel?> = _levelUpEvent.asStateFlow()
 
     init {
         loadWorkouts()
@@ -36,13 +49,74 @@ class WorkoutsViewModel @Inject constructor(
     private fun loadWorkouts() {
         viewModelScope.launch {
             val presets = trainingRepository.getPresets().first()
-            val userPrefs = userPreferencesRepository.userPreferences.first()
+            val sessions = trainingRepository.getSessions().first()
+            val totalTrainings = sessions.size
 
-            _uiState.value = WorkoutsUiState(
+            val userPrefs = userPreferencesRepository.userPreferences.first()
+            val currentLevel = userPrefs.trainingLevel
+
+            val targetLevel = levelForTrainingsCount(totalTrainings)
+
+            if (targetLevel.ordinal > currentLevel.ordinal) {
+                userPreferencesRepository.updateTrainingLevel(targetLevel)
+                _levelUpEvent.value = targetLevel
+            }
+
+            val effectiveLevel = if (targetLevel.ordinal > currentLevel.ordinal) targetLevel else currentLevel
+
+            _uiState.value = buildUiState(
                 presets = presets,
-                userLevel = userPrefs.trainingLevel,
-                isLoading = false
+                level = effectiveLevel,
+                totalTrainings = totalTrainings
             )
         }
+    }
+
+    private fun buildUiState(
+        presets: List<TrainingPreset>,
+        level: TrainingLevel,
+        totalTrainings: Int
+    ): WorkoutsUiState {
+        val nextLevel = when (level) {
+            TrainingLevel.BEGINNER -> TrainingLevel.INTERMEDIATE
+            TrainingLevel.INTERMEDIATE -> TrainingLevel.ADVANCED
+            TrainingLevel.ADVANCED -> null
+        }
+
+        val thresholdForNext = when (level) {
+            TrainingLevel.BEGINNER -> INTERMEDIATE_THRESHOLD
+            TrainingLevel.INTERMEDIATE -> ADVANCED_THRESHOLD
+            TrainingLevel.ADVANCED -> totalTrainings
+        }
+
+        val doneOnLevel = totalTrainings.coerceAtMost(thresholdForNext)
+        val progress = if (thresholdForNext > 0) {
+            (doneOnLevel.toFloat() / thresholdForNext).coerceIn(0f, 1f)
+        } else {
+            1f
+        }
+
+        return WorkoutsUiState(
+            presets = presets,
+            userLevel = level,
+            isLoading = false,
+            totalCompletedTrainings = totalTrainings,
+            trainingsNeededForNextLevel = thresholdForNext,
+            trainingsDoneOnCurrentLevel = doneOnLevel,
+            nextLevel = nextLevel,
+            progressToNextLevel = progress
+        )
+    }
+
+    private fun levelForTrainingsCount(count: Int): TrainingLevel {
+        return when {
+            count >= ADVANCED_THRESHOLD -> TrainingLevel.ADVANCED
+            count >= INTERMEDIATE_THRESHOLD -> TrainingLevel.INTERMEDIATE
+            else -> TrainingLevel.BEGINNER
+        }
+    }
+
+    fun onLevelUpShown() {
+        _levelUpEvent.value = null
     }
 }

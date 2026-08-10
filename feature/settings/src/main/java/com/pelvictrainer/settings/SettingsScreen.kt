@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,7 +69,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ===== Секция: Внешний вид =====
+            // ===== Внешний вид =====
             SettingsSection(title = "Внешний вид") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -134,7 +135,78 @@ fun SettingsScreen(
                 }
             }
 
-            // ===== Секция: Тренировка =====
+            // ===== Цели =====
+            SettingsSection(title = "Цели") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FitnessCenter,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Недельная цель",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Количество тренировок в неделю",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "${prefs.weeklyGoal} ${pluralizeTrainings(prefs.weeklyGoal)} в неделю",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Slider(
+                            value = prefs.weeklyGoal.toFloat(),
+                            onValueChange = { viewModel.updateWeeklyGoal(it.toInt()) },
+                            valueRange = 1f..7f,
+                            steps = 5
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "1",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "7",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ===== Тренировка =====
             SettingsSection(title = "Тренировка") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -199,7 +271,7 @@ fun SettingsScreen(
                 }
             }
 
-            // ===== Секция: Напоминания =====
+            // ===== Напоминания =====
             SettingsSection(title = "Напоминания") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -218,7 +290,6 @@ fun SettingsScreen(
                         if (prefs.remindersEnabled) {
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Список времён напоминаний
                             Text(
                                 text = "Время напоминаний:",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -261,7 +332,6 @@ fun SettingsScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Кнопка добавления времени
                             AddTimeButton(
                                 onTimeSelected = { hour, minute ->
                                     viewModel.addReminderTime(hour, minute)
@@ -270,7 +340,6 @@ fun SettingsScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Выбор дней недели
                             Text(
                                 text = "Дни недели:",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -297,7 +366,7 @@ fun SettingsScreen(
                 }
             }
 
-            // ===== Секция: О приложении =====
+            // ===== О приложении =====
             SettingsSection(title = "О приложении") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -315,6 +384,16 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+}
+
+private fun pluralizeTrainings(count: Int): String {
+    val mod10 = count % 10
+    val mod100 = count % 100
+    return when {
+        mod10 == 1 && mod100 != 11 -> "тренировка"
+        mod10 in 2..4 && mod100 !in 12..14 -> "тренировки"
+        else -> "тренировок"
     }
 }
 

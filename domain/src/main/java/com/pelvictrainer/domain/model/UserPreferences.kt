@@ -10,8 +10,8 @@ data class UserPreferences(
     val voiceVolume: Float = 0.8f,
     val vibrationEnabled: Boolean = true,
     val vibrationIntensity: Float = 0.8f,
-    // Настройки напоминаний
     val remindersEnabled: Boolean = false,
     val reminderTimes: List<ReminderConfig> = emptyList(),
-    val reminderDaysOfWeek: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7) // Пн-Вс
+    val reminderDaysOfWeek: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7),
+    val weeklyGoal: Int = 3
 )

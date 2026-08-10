@@ -24,145 +24,131 @@ private val Context.dataStore by preferencesDataStore(name = "pelvic_prefs")
 @Singleton
 class PreferencesDataStore @Inject constructor(
     @ApplicationContext private val context: Context
-) : PelvicDataStore {
+) {
 
-    private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
-    private val TRAINING_LEVEL_KEY = stringPreferencesKey("training_level")
-    private val USER_AGE_KEY = intPreferencesKey("user_age")
-    private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
-    private val ACCENT_COLOR_KEY = stringPreferencesKey("accent_color")
-    private val VOICE_ENABLED_KEY = booleanPreferencesKey("voice_enabled")
-    private val VOICE_VOLUME_KEY = floatPreferencesKey("voice_volume")
-    private val VIBRATION_ENABLED_KEY = booleanPreferencesKey("vibration_enabled")
-    private val VIBRATION_INTENSITY_KEY = floatPreferencesKey("vibration_intensity")
+    private val onboardingCompletedKey = booleanPreferencesKey("onboarding_completed")
+    private val trainingLevelKey = stringPreferencesKey("training_level")
+    private val userAgeKey = intPreferencesKey("user_age")
+    private val themeModeKey = stringPreferencesKey("theme_mode")
+    private val accentColorKey = stringPreferencesKey("accent_color")
+    private val voiceEnabledKey = booleanPreferencesKey("voice_enabled")
+    private val voiceVolumeKey = floatPreferencesKey("voice_volume")
+    private val vibrationEnabledKey = booleanPreferencesKey("vibration_enabled")
+    private val vibrationIntensityKey = floatPreferencesKey("vibration_intensity")
+    private val remindersEnabledKey = booleanPreferencesKey("reminders_enabled")
+    private val reminderTimesKey = stringSetPreferencesKey("reminder_times")
+    private val reminderDaysKey = stringPreferencesKey("reminder_days")
+    private val weeklyGoalKey = intPreferencesKey("weekly_goal")
 
-    // Ключи для напоминаний
-    private val REMINDERS_ENABLED_KEY = booleanPreferencesKey("reminders_enabled")
-    private val REMINDER_TIMES_KEY = stringSetPreferencesKey("reminder_times")
-    private val REMINDER_DAYS_KEY = stringPreferencesKey("reminder_days")
-
-    override fun getUserPreferences(): Flow<UserPreferences> {
+    fun getUserPreferences(): Flow<UserPreferences> {
         return context.dataStore.data.map { prefs ->
-            val reminderTimes = prefs[REMINDER_TIMES_KEY]?.mapNotNull {
+            val reminderTimes = prefs[reminderTimesKey]?.mapNotNull {
                 ReminderConfig.fromString(it)
             } ?: emptyList()
 
-            val reminderDays = prefs[REMINDER_DAYS_KEY]?.split(",")?.mapNotNull {
+            val reminderDays = prefs[reminderDaysKey]?.split(",")?.mapNotNull {
                 it.trim().toIntOrNull()
             }?.filter { it in 1..7 } ?: listOf(1, 2, 3, 4, 5, 6, 7)
 
             UserPreferences(
-                isOnboardingCompleted = prefs[ONBOARDING_COMPLETED_KEY] ?: false,
-                trainingLevel = prefs[TRAINING_LEVEL_KEY]?.let {
+                isOnboardingCompleted = prefs[onboardingCompletedKey] ?: false,
+                trainingLevel = prefs[trainingLevelKey]?.let {
                     try { TrainingLevel.valueOf(it) } catch (e: Exception) { TrainingLevel.BEGINNER }
                 } ?: TrainingLevel.BEGINNER,
-                userAge = prefs[USER_AGE_KEY],
-                themeMode = prefs[THEME_MODE_KEY]?.let {
+                userAge = prefs[userAgeKey],
+                themeMode = prefs[themeModeKey]?.let {
                     try { ThemeMode.valueOf(it) } catch (e: Exception) { ThemeMode.DARK }
                 } ?: ThemeMode.DARK,
-                accentColor = prefs[ACCENT_COLOR_KEY]?.let {
+                accentColor = prefs[accentColorKey]?.let {
                     try { AccentColor.valueOf(it) } catch (e: Exception) { AccentColor.BORDEAUX }
                 } ?: AccentColor.BORDEAUX,
-                voiceEnabled = prefs[VOICE_ENABLED_KEY] ?: true,
-                voiceVolume = prefs[VOICE_VOLUME_KEY] ?: 0.8f,
-                vibrationEnabled = prefs[VIBRATION_ENABLED_KEY] ?: true,
-                vibrationIntensity = prefs[VIBRATION_INTENSITY_KEY] ?: 0.8f,
-                remindersEnabled = prefs[REMINDERS_ENABLED_KEY] ?: false,
+                voiceEnabled = prefs[voiceEnabledKey] ?: true,
+                voiceVolume = prefs[voiceVolumeKey] ?: 0.8f,
+                vibrationEnabled = prefs[vibrationEnabledKey] ?: true,
+                vibrationIntensity = prefs[vibrationIntensityKey] ?: 0.8f,
+                remindersEnabled = prefs[remindersEnabledKey] ?: false,
                 reminderTimes = reminderTimes,
-                reminderDaysOfWeek = reminderDays
+                reminderDaysOfWeek = reminderDays,
+                weeklyGoal = prefs[weeklyGoalKey]?.coerceIn(1, 7) ?: 3
             )
         }
     }
 
-    override fun getTrainingLevel(): Flow<TrainingLevel?> {
+    fun getTrainingLevel(): Flow<TrainingLevel?> {
         return context.dataStore.data.map { prefs ->
-            prefs[TRAINING_LEVEL_KEY]?.let {
+            prefs[trainingLevelKey]?.let {
                 try { TrainingLevel.valueOf(it) } catch (e: Exception) { null }
             }
         }
     }
 
-    override fun isOnboardingCompleted(): Flow<Boolean> {
+    fun isOnboardingCompleted(): Flow<Boolean> {
         return context.dataStore.data.map { prefs ->
-            prefs[ONBOARDING_COMPLETED_KEY] ?: false
+            prefs[onboardingCompletedKey] ?: false
         }
     }
 
-    override suspend fun updateTrainingLevel(level: TrainingLevel) {
-        context.dataStore.edit { prefs ->
-            prefs[TRAINING_LEVEL_KEY] = level.name
-        }
+    suspend fun updateTrainingLevel(level: TrainingLevel) {
+        context.dataStore.edit { prefs -> prefs[trainingLevelKey] = level.name }
     }
 
-    override suspend fun completeOnboarding() {
-        context.dataStore.edit { prefs ->
-            prefs[ONBOARDING_COMPLETED_KEY] = true
-        }
+    suspend fun completeOnboarding() {
+        context.dataStore.edit { prefs -> prefs[onboardingCompletedKey] = true }
     }
 
-    override suspend fun updateThemeMode(mode: ThemeMode) {
-        context.dataStore.edit { prefs ->
-            prefs[THEME_MODE_KEY] = mode.name
-        }
+    suspend fun updateThemeMode(mode: ThemeMode) {
+        context.dataStore.edit { prefs -> prefs[themeModeKey] = mode.name }
     }
 
-    override suspend fun updateAccentColor(color: AccentColor) {
-        context.dataStore.edit { prefs ->
-            prefs[ACCENT_COLOR_KEY] = color.name
-        }
+    suspend fun updateAccentColor(color: AccentColor) {
+        context.dataStore.edit { prefs -> prefs[accentColorKey] = color.name }
     }
 
-    override suspend fun updateVoiceEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[VOICE_ENABLED_KEY] = enabled
-        }
+    suspend fun updateVoiceEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[voiceEnabledKey] = enabled }
     }
 
-    override suspend fun updateVoiceVolume(volume: Float) {
-        context.dataStore.edit { prefs ->
-            prefs[VOICE_VOLUME_KEY] = volume
-        }
+    suspend fun updateVoiceVolume(volume: Float) {
+        context.dataStore.edit { prefs -> prefs[voiceVolumeKey] = volume }
     }
 
-    override suspend fun updateVibrationEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[VIBRATION_ENABLED_KEY] = enabled
-        }
+    suspend fun updateVibrationEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[vibrationEnabledKey] = enabled }
     }
 
-    override suspend fun updateVibrationIntensity(intensity: Float) {
-        context.dataStore.edit { prefs ->
-            prefs[VIBRATION_INTENSITY_KEY] = intensity
-        }
+    suspend fun updateVibrationIntensity(intensity: Float) {
+        context.dataStore.edit { prefs -> prefs[vibrationIntensityKey] = intensity }
     }
 
-    // ============ НАПОМИНАНИЯ ============
-
-    override suspend fun updateRemindersEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
-            prefs[REMINDERS_ENABLED_KEY] = enabled
-        }
+    suspend fun updateRemindersEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[remindersEnabledKey] = enabled }
     }
 
-    override suspend fun addReminderTime(config: ReminderConfig) {
+    suspend fun addReminderTime(config: ReminderConfig) {
         context.dataStore.edit { prefs ->
-            val current = prefs[REMINDER_TIMES_KEY]?.toMutableSet() ?: mutableSetOf()
+            val current = prefs[reminderTimesKey]?.toMutableSet() ?: mutableSetOf()
             current.add(config.formatTime())
-            prefs[REMINDER_TIMES_KEY] = current
+            prefs[reminderTimesKey] = current
         }
     }
 
-    override suspend fun removeReminderTime(config: ReminderConfig) {
+    suspend fun removeReminderTime(config: ReminderConfig) {
         context.dataStore.edit { prefs ->
-            val current = prefs[REMINDER_TIMES_KEY]?.toMutableSet() ?: mutableSetOf()
+            val current = prefs[reminderTimesKey]?.toMutableSet() ?: mutableSetOf()
             current.remove(config.formatTime())
-            prefs[REMINDER_TIMES_KEY] = current
+            prefs[reminderTimesKey] = current
         }
     }
 
-    override suspend fun updateReminderDaysOfWeek(days: List<Int>) {
+    suspend fun updateReminderDaysOfWeek(days: List<Int>) {
         context.dataStore.edit { prefs ->
-            prefs[REMINDER_DAYS_KEY] = days.filter { it in 1..7 }.joinToString(",")
+            prefs[reminderDaysKey] = days.filter { it in 1..7 }.joinToString(",")
+        }
+    }
+
+    suspend fun updateWeeklyGoal(goal: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[weeklyGoalKey] = goal.coerceIn(1, 7)
         }
     }
 }

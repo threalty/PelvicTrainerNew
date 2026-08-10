@@ -1,6 +1,6 @@
 package com.pelvictrainer.data.repository
 
-import com.pelvictrainer.datastore.PelvicDataStore
+import com.pelvictrainer.datastore.PreferencesDataStore
 import com.pelvictrainer.domain.model.AccentColor
 import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 @Singleton
 class UserPreferencesRepositoryImpl @Inject constructor(
-    private val dataStore: PelvicDataStore
+    private val dataStore: PreferencesDataStore
 ) : UserPreferencesRepository {
 
     override val userPreferences: Flow<UserPreferences>
@@ -42,7 +42,6 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     override suspend fun updateVibrationIntensity(intensity: Float) =
         dataStore.updateVibrationIntensity(intensity)
 
-    // Напоминания
     override suspend fun updateRemindersEnabled(enabled: Boolean) =
         dataStore.updateRemindersEnabled(enabled)
 
@@ -54,4 +53,7 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 
     override suspend fun updateReminderDaysOfWeek(days: List<Int>) =
         dataStore.updateReminderDaysOfWeek(days)
+
+    override suspend fun updateWeeklyGoal(goal: Int) =
+        dataStore.updateWeeklyGoal(goal)
 }

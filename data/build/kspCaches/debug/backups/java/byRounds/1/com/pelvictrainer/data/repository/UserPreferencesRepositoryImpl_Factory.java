@@ -1,6 +1,6 @@
 package com.pelvictrainer.data.repository;
 
-import com.pelvictrainer.datastore.PelvicDataStore;
+import com.pelvictrainer.datastore.PreferencesDataStore;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
@@ -24,9 +24,9 @@ import javax.inject.Provider;
     "deprecation"
 })
 public final class UserPreferencesRepositoryImpl_Factory implements Factory<UserPreferencesRepositoryImpl> {
-  private final Provider<PelvicDataStore> dataStoreProvider;
+  private final Provider<PreferencesDataStore> dataStoreProvider;
 
-  public UserPreferencesRepositoryImpl_Factory(Provider<PelvicDataStore> dataStoreProvider) {
+  public UserPreferencesRepositoryImpl_Factory(Provider<PreferencesDataStore> dataStoreProvider) {
     this.dataStoreProvider = dataStoreProvider;
   }
 
@@ -36,11 +36,11 @@ public final class UserPreferencesRepositoryImpl_Factory implements Factory<User
   }
 
   public static UserPreferencesRepositoryImpl_Factory create(
-      Provider<PelvicDataStore> dataStoreProvider) {
+      Provider<PreferencesDataStore> dataStoreProvider) {
     return new UserPreferencesRepositoryImpl_Factory(dataStoreProvider);
   }
 
-  public static UserPreferencesRepositoryImpl newInstance(PelvicDataStore dataStore) {
+  public static UserPreferencesRepositoryImpl newInstance(PreferencesDataStore dataStore) {
     return new UserPreferencesRepositoryImpl(dataStore);
   }
 }
