@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +34,9 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -589,6 +592,7 @@ private fun DayChip(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddTimeButton(
     onTimeSelected: (hour: Int, minute: Int) -> Unit
@@ -608,102 +612,38 @@ private fun AddTimeButton(
     }
 
     if (showTimePicker) {
-        TimePickerDialog(
-            onDismiss = { showTimePicker = false },
-            onConfirm = { hour, minute ->
-                onTimeSelected(hour, minute)
-                showTimePicker = false
-            }
+        val timePickerState = rememberTimePickerState(
+            initialHour = 9,
+            initialMinute = 0,
+            is24Hour = true
         )
-    }
-}
 
-@Composable
-private fun TimePickerDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (hour: Int, minute: Int) -> Unit
-) {
-    var selectedHour by remember { mutableStateOf(9) }
-    var selectedMinute by remember { mutableStateOf(0) }
-
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Выберите время") },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Выберите время напоминания") },
+            text = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    TimePickerColumn(
-                        label = "Часы",
-                        value = selectedHour,
-                        maxValue = 23,
-                        onValueChange = { selectedHour = it }
-                    )
-                    Spacer(modifier = Modifier.width(24.dp))
-                    Text(
-                        text = ":",
-                        style = MaterialTheme.typography.headlineLarge
-                    )
-                    Spacer(modifier = Modifier.width(24.dp))
-                    TimePickerColumn(
-                        label = "Минуты",
-                        value = selectedMinute,
-                        maxValue = 59,
-                        onValueChange = { selectedMinute = it }
-                    )
+                    TimePicker(state = timePickerState)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onTimeSelected(timePickerState.hour, timePickerState.minute)
+                        showTimePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Отмена")
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(selectedHour, selectedMinute) }) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Отмена")
-            }
-        }
-    )
-}
-
-@Composable
-private fun TimePickerColumn(
-    label: String,
-    value: Int,
-    maxValue: Int,
-    onValueChange: (Int) -> Unit
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = {
-                if (value > 0) onValueChange(value - 1)
-            }) {
-                Text("▲", style = MaterialTheme.typography.titleMedium)
-            }
-            Text(
-                text = String.format("%02d", value),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-            IconButton(onClick = {
-                if (value < maxValue) onValueChange(value + 1)
-            }) {
-                Text("▼", style = MaterialTheme.typography.titleMedium)
-            }
-        }
     }
 }
