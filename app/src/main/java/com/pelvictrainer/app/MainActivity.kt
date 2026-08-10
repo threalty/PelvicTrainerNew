@@ -25,7 +25,6 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // Разрешение получено — запускаем планировщик
             reminderScheduler.scheduleReminders()
         }
     }
@@ -34,7 +33,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Запрашиваем разрешение на уведомления (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val hasPermission = ContextCompat.checkSelfPermission(
                 this,
@@ -47,12 +45,11 @@ class MainActivity : ComponentActivity() {
                 reminderScheduler.scheduleReminders()
             }
         } else {
-            // Android 12 и ниже — разрешение не нужно
             reminderScheduler.scheduleReminders()
         }
 
         setContent {
-            PelvicTrainerTheme(darkTheme = true) {
+            PelvicTrainerTheme {
                 val navController = rememberNavController()
                 AppNavigation(navController = navController)
             }
