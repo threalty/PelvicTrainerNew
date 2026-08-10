@@ -28,8 +28,7 @@ include(":core:common")
 include(":core:database")
 include(":core:datastore")
 include(":core:designsystem")
-include(":core:navigation")
-include(":core:network")
+
 
 // Feature модули (без дублей!)
 include(":feature:training")
