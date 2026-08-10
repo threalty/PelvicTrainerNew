@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -103,7 +104,13 @@ fun MainScreen(
                 composable(BottomNavItem.Home.route) {
                     HomeScreen(
                         onOpenWorkoutsList = {
-                            mainNavController.navigate(BottomNavItem.Workouts.route)
+                            mainNavController.navigate(BottomNavItem.Workouts.route) {
+                                popUpTo(mainNavController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
                     )
                 }
@@ -118,13 +125,43 @@ fun MainScreen(
                     )
                 }
                 composable(BottomNavItem.Calendar.route) {
-                    CalendarScreen()
+                    CalendarScreen(
+                        onNavigateToWorkouts = {
+                            mainNavController.navigate(BottomNavItem.Workouts.route) {
+                                popUpTo(mainNavController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
                 }
                 composable(BottomNavItem.Statistics.route) {
-                    StatisticsScreen()
+                    StatisticsScreen(
+                        onNavigateToWorkouts = {
+                            mainNavController.navigate(BottomNavItem.Workouts.route) {
+                                popUpTo(mainNavController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
                 }
                 composable(BottomNavItem.Achievements.route) {
-                    AchievementsScreen()
+                    AchievementsScreen(
+                        onNavigateToWorkouts = {
+                            mainNavController.navigate(BottomNavItem.Workouts.route) {
+                                popUpTo(mainNavController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
                 }
                 composable(BottomNavItem.Settings.route) {
                     SettingsScreen()

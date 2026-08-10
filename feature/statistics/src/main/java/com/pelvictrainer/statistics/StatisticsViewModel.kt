@@ -18,7 +18,8 @@ data class StatisticsUiState(
     val currentStreak: Int = 0,
     val bestStreak: Int = 0,
     val averageDurationSeconds: Long = 0,
-    val last7DaysSessions: List<Pair<String, Int>> = emptyList() // (день недели, количество тренировок)
+    val last7DaysSessions: List<Pair<String, Int>> = emptyList(),
+    val isLoading: Boolean = false
 )
 
 @HiltViewModel
@@ -41,6 +42,15 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    suspend fun refresh() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+        try {
+            kotlinx.coroutines.delay(800)
+        } finally {
+            _uiState.value = _uiState.value.copy(isLoading = false)
+        }
+    }
+
     private fun calculateStatistics(sessions: List<TrainingSession>): StatisticsUiState {
         if (sessions.isEmpty()) {
             return StatisticsUiState(
@@ -52,10 +62,7 @@ class StatisticsViewModel @Inject constructor(
         val totalDuration = sessions.sumOf { it.durationSeconds }
         val averageDuration = totalDuration / totalSessions
 
-        // Считаем streak
         val (currentStreak, bestStreak) = calculateStreaks(sessions)
-
-        // График за последние 7 дней
         val last7Days = generateLast7DaysData(sessions)
 
         return StatisticsUiState(
@@ -64,7 +71,8 @@ class StatisticsViewModel @Inject constructor(
             currentStreak = currentStreak,
             bestStreak = bestStreak,
             averageDurationSeconds = averageDuration,
-            last7DaysSessions = last7Days
+            last7DaysSessions = last7Days,
+            isLoading = false
         )
     }
 
@@ -79,7 +87,6 @@ class StatisticsViewModel @Inject constructor(
         var bestStreak = 0
         var tempStreak = 1
 
-        // Current streak - считаем с сегодняшнего дня или вчерашнего
         val today = LocalDate.now()
         val yesterday = today.minusDays(1)
 
@@ -98,7 +105,6 @@ class StatisticsViewModel @Inject constructor(
             }
         }
 
-        // Best streak
         for (i in 1 until trainingDates.size) {
             val diff = java.time.temporal.ChronoUnit.DAYS.between(
                 trainingDates[i],

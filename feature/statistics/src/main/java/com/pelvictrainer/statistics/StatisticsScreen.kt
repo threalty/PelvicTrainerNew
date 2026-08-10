@@ -1,7 +1,10 @@
 package com.pelvictrainer.statistics
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,100 +47,202 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pelvictrainer.designsystem.components.AnimatedCounter
+import com.pelvictrainer.designsystem.components.EmptyState
+import com.pelvictrainer.designsystem.components.PullToRefreshBox
+import com.pelvictrainer.designsystem.util.rememberHapticHelper
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatisticsScreen(
-    viewModel: StatisticsViewModel = hiltViewModel()
+    viewModel: StatisticsViewModel = hiltViewModel(),
+    onNavigateToWorkouts: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val hapticHelper = rememberHapticHelper()
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Статистика") })
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+        PullToRefreshBox(
+            isRefreshing = uiState.isLoading,
+            onRefresh = {
+                coroutineScope.launch {
+                    viewModel.refresh()
+                }
+            },
+            modifier = Modifier.padding(paddingValues)
         ) {
-            // 4 карточки со статистикой
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                StatCard(
-                    icon = Icons.Default.FitnessCenter,
-                    title = "Тренировок",
-                    value = uiState.totalSessions.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    icon = Icons.Default.LocalFireDepartment,
-                    title = "Серия",
-                    value = "${uiState.currentStreak} дн",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                StatCard(
-                    icon = Icons.Default.EmojiEvents,
-                    title = "Лучшая серия",
-                    value = "${uiState.bestStreak} дн",
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    icon = Icons.Default.Schedule,
-                    title = "Всего времени",
-                    value = formatDuration(uiState.totalDurationSeconds),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // График за последние 7 дней
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+            if (uiState.totalSessions == 0 && !uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Последние 7 дней",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    WeekBarChart(
-                        data = uiState.last7DaysSessions,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp)
+                    EmptyState(
+                        icon = Icons.Default.FitnessCenter,
+                        title = "Начните свою первую тренировку",
+                        description = "После тренировок здесь появится ваша статистика: общее время, серия дней, лучшая серия и график за 7 дней",
+                        primaryActionText = "Начать тренировку",
+                        onPrimaryActionClick = {
+                            hapticHelper.mediumTap()
+                            onNavigateToWorkouts()
+                        }
                     )
                 }
-            }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        AnimatedVisibility(
+                            visible = true,
+                            modifier = Modifier.weight(1f),
+                            enter = fadeIn() + slideInVertically(
+                                initialOffsetY = { it / 2 }
+                            )
+                        ) {
+                            StatCard(
+                                icon = Icons.Default.FitnessCenter,
+                                title = "Тренировок"
+                            ) {
+                                AnimatedCounter(
+                                    targetValue = uiState.totalSessions,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                        AnimatedVisibility(
+                            visible = true,
+                            modifier = Modifier.weight(1f),
+                            enter = fadeIn() + slideInVertically(
+                                initialOffsetY = { it / 2 },
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    delayMillis = 100
+                                )
+                            )
+                        ) {
+                            StatCard(
+                                icon = Icons.Default.LocalFireDepartment,
+                                title = "Серия"
+                            ) {
+                                AnimatedCounter(
+                                    targetValue = uiState.currentStreak,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    suffix = " дн"
+                                )
+                            }
+                        }
+                    }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-            // Пустое состояние
-            if (uiState.totalSessions == 0) {
-                EmptyStateCard()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        AnimatedVisibility(
+                            visible = true,
+                            modifier = Modifier.weight(1f),
+                            enter = fadeIn() + slideInVertically(
+                                initialOffsetY = { it / 2 },
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    delayMillis = 200
+                                )
+                            )
+                        ) {
+                            StatCard(
+                                icon = Icons.Default.EmojiEvents,
+                                title = "Лучшая серия"
+                            ) {
+                                AnimatedCounter(
+                                    targetValue = uiState.bestStreak,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    suffix = " дн"
+                                )
+                            }
+                        }
+                        AnimatedVisibility(
+                            visible = true,
+                            modifier = Modifier.weight(1f),
+                            enter = fadeIn() + slideInVertically(
+                                initialOffsetY = { it / 2 },
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    delayMillis = 300
+                                )
+                            )
+                        ) {
+                            StatCard(
+                                icon = Icons.Default.Schedule,
+                                title = "Всего времени"
+                            ) {
+                                Text(
+                                    text = formatDuration(uiState.totalDurationSeconds),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + slideInVertically(
+                            initialOffsetY = { it / 3 },
+                            animationSpec = tween(
+                                durationMillis = 400,
+                                delayMillis = 400
+                            )
+                        )
+                    ) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "Последние 7 дней",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                WeekBarChart(
+                                    data = uiState.last7DaysSessions,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(140.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
         }
     }
@@ -146,8 +252,8 @@ fun StatisticsScreen(
 private fun StatCard(
     icon: ImageVector,
     title: String,
-    value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueContent: @Composable () -> Unit
 ) {
     Card(
         modifier = modifier,
@@ -171,12 +277,7 @@ private fun StatCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            valueContent()
         }
     }
 }
@@ -245,41 +346,6 @@ private fun WeekBarChart(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun EmptyStateCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "🎯",
-                style = MaterialTheme.typography.displayLarge
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Начните свою первую тренировку",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "После тренировок здесь появится ваша статистика и прогресс",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-            )
         }
     }
 }

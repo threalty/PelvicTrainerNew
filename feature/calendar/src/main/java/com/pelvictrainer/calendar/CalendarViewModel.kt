@@ -17,7 +17,8 @@ data class CalendarUiState(
     val currentMonth: YearMonth = YearMonth.now(),
     val sessions: List<TrainingSession> = emptyList(),
     val selectedDate: LocalDate? = null,
-    val sessionsForSelectedDate: List<TrainingSession> = emptyList()
+    val sessionsForSelectedDate: List<TrainingSession> = emptyList(),
+    val isLoading: Boolean = false
 )
 
 @HiltViewModel
@@ -48,6 +49,17 @@ class CalendarViewModel @Inject constructor(
 
     fun changeMonth(yearMonth: YearMonth) {
         _uiState.value = _uiState.value.copy(currentMonth = yearMonth)
+    }
+
+    suspend fun refresh() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+        try {
+            // Данные уже автоматически обновляются через collect из loadSessions()
+            // Здесь просто имитируем задержку для UX
+            kotlinx.coroutines.delay(800)
+        } finally {
+            _uiState.value = _uiState.value.copy(isLoading = false)
+        }
     }
 
     private fun updateSessionsForSelectedDate() {

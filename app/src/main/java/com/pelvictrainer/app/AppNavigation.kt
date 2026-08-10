@@ -1,5 +1,9 @@
 package com.pelvictrainer.app
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -67,9 +71,36 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route
+        startDestination = Screen.Splash.route,
+        enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(300))
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(300))
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(300))
+        }
     ) {
-        composable(Screen.Splash.route) {
+        composable(
+            route = Screen.Splash.route,
+            enterTransition = { fadeIn(animationSpec = tween(500)) },
+            exitTransition = { fadeOut(animationSpec = tween(500)) }
+        ) {
             SplashScreen(
                 onSplashComplete = {
                     val destination = if (isOnboardingCompleted) {
@@ -84,7 +115,7 @@ fun AppNavigation(
             )
         }
 
-        composable(Screen.Onboarding.route) {
+        composable(route = Screen.Onboarding.route) {
             OnboardingScreen(
                 onOnboardingComplete = {
                     viewModel.completeOnboarding()
@@ -95,7 +126,7 @@ fun AppNavigation(
             )
         }
 
-        composable(Screen.LevelSelection.route) {
+        composable(route = Screen.LevelSelection.route) {
             LevelSelectionScreen(
                 onLevelSelected = { level ->
                     viewModel.selectLevel(level)
@@ -106,7 +137,7 @@ fun AppNavigation(
             )
         }
 
-        composable(Screen.Main.route) {
+        composable(route = Screen.Main.route) {
             MainScreen(
                 navController = navController,
                 onStartTraining = { presetId ->
@@ -119,7 +150,19 @@ fun AppNavigation(
             route = Screen.Training.route,
             arguments = listOf(
                 navArgument("presetId") { type = NavType.LongType }
-            )
+            ),
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(350)
+                ) + fadeIn(animationSpec = tween(350))
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(350)
+                ) + fadeOut(animationSpec = tween(350))
+            }
         ) { backStack ->
             val presetId = backStack.arguments?.getLong("presetId") ?: 1L
             TrainingScreen(

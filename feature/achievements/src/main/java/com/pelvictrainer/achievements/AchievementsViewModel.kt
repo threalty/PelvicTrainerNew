@@ -18,7 +18,8 @@ import javax.inject.Inject
 data class AchievementsUiState(
     val achievements: List<Achievement> = emptyList(),
     val unlockedCount: Int = 0,
-    val totalCount: Int = 0
+    val totalCount: Int = 0,
+    val isLoading: Boolean = false
 )
 
 @HiltViewModel
@@ -40,9 +41,19 @@ class AchievementsViewModel @Inject constructor(
                 _uiState.value = AchievementsUiState(
                     achievements = achievements,
                     unlockedCount = achievements.count { it.isUnlocked },
-                    totalCount = achievements.size
+                    totalCount = achievements.size,
+                    isLoading = false
                 )
             }
+        }
+    }
+
+    suspend fun refresh() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+        try {
+            kotlinx.coroutines.delay(800)
+        } finally {
+            _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
 
