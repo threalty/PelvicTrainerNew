@@ -1,11 +1,13 @@
 package com.pelvictrainer.app
 
+import com.pelvictrainer.domain.analytics.AnalyticsTracker
 import com.pelvictrainer.domain.model.TrainingSession
 import com.pelvictrainer.domain.model.UserPreferences
 import com.pelvictrainer.domain.repository.TrainingRepository
 import com.pelvictrainer.domain.repository.UserPreferencesRepository
 import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +30,7 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var trainingRepository: TrainingRepository
     private lateinit var userPreferencesRepository: UserPreferencesRepository
+    private lateinit var analytics: AnalyticsTracker
     private val prefsFlow = MutableStateFlow(UserPreferences())
     private val sessionsFlow = MutableStateFlow<List<TrainingSession>>(emptyList())
 
@@ -36,6 +39,7 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         trainingRepository = mockk()
         userPreferencesRepository = mockk()
+        analytics = mockk(relaxed = true)  // relaxed = игнорирует вызовы без проверки
 
         coEvery { trainingRepository.getSessions() } returns sessionsFlow
         coEvery { userPreferencesRepository.userPreferences } returns prefsFlow
@@ -47,7 +51,7 @@ class HomeViewModelTest {
     }
 
     private fun createViewModel(): HomeViewModel {
-        return HomeViewModel(trainingRepository, userPreferencesRepository)
+        return HomeViewModel(trainingRepository, userPreferencesRepository, analytics)
     }
 
     private fun createSession(date: LocalDate): TrainingSession {
@@ -76,6 +80,17 @@ class HomeViewModelTest {
         assertEquals(0, state.completedThisWeek)
         assertEquals(0, state.currentStreak)
         assertEquals(0, state.totalTrainings)
+    }
+
+    @Test
+    fun `tracks app_opened event on init`() = runTest {
+        prefsFlow.value = UserPreferences(weeklyGoal = 3)
+        sessionsFlow.value = emptyList()
+
+        createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify { analytics.trackEvent("app_opened") }
     }
 
     // ===== Тесты недельного прогресса =====
@@ -169,6 +184,53 @@ class HomeViewModelTest {
         val state = viewModel.uiState.value
         assertFalse(state.isGoalReached)
         assertEquals(3, state.remainingTrainings)
+    }
+
+    @Test
+    fun `tracks weekly_goal_reached when goal is reached`() = runTest {
+        val today = LocalDate.now()
+        prefsFlow.value = UserPreferences(weeklyGoal = 2)
+        sessionsFlow.value = emptyList()
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Добавляем достаточно сессий чтобы достичь цели
+        sessionsFlow.value = listOf(
+            createSession(today),
+            createSession(today.minusDays(1))
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify {
+            analytics.trackEvent(
+                "weekly_goal_reached",
+                mapOf(
+                    "goal_value" to 2,
+                    "completed" to 2
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `does not track weekly_goal_reached when already reached`() = runTest {
+        val today = LocalDate.now()
+        prefsFlow.value = UserPreferences(weeklyGoal = 1)
+        sessionsFlow.value = listOf(createSession(today))
+
+        createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Обновляем данные, но цель уже достигнута — не должно быть повторного трека
+        sessionsFlow.value = listOf(
+            createSession(today),
+            createSession(today.minusDays(1))
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Проверяем что event был вызван только один раз (при первом достижении)
+        verify(exactly = 1) { analytics.trackEvent("weekly_goal_reached", any()) }
     }
 
     // ===== Тесты расчёта streak =====
