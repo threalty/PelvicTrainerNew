@@ -2,6 +2,7 @@ package com.pelvictrainer.data.repository
 
 import com.pelvictrainer.datastore.PreferencesDataStore
 import com.pelvictrainer.domain.model.AccentColor
+import com.pelvictrainer.domain.model.BackgroundSound
 import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.TrainingLevel
@@ -56,4 +57,7 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 
     override suspend fun updateWeeklyGoal(goal: Int) =
         dataStore.updateWeeklyGoal(goal)
+
+    override suspend fun updateBackgroundSound(sound: BackgroundSound) =
+        dataStore.updateBackgroundSound(sound)
 }

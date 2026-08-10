@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PelvicTrainer</string>
+    <string name="widget_description">Показывает серию тренировок, прогресс к недельной цели и кнопку быстрого старта</string>
+    <string name="widget_name">PelvicTrainer</string>
+</resources>

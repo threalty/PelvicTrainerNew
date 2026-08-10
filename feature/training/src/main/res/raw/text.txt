@@ -1,0 +1,11 @@
+Нужно добавить 4 MP3-файла в feature/training/src/main/res/raw/:
+Файл
+Где взять (бесплатно, CC0)
+rain.mp3
+https://pixabay.com/sound-effects/search/rain/
+forest.mp3
+https://pixabay.com/sound-effects/search/forest/
+ocean.mp3
+https://pixabay.com/sound-effects/search/ocean/
+binaural.mp3
+https://freesound.org/search/?q=binaural

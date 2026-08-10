@@ -1,6 +1,7 @@
 package com.pelvictrainer.domain.repository
 
 import com.pelvictrainer.domain.model.AccentColor
+import com.pelvictrainer.domain.model.BackgroundSound
 import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.TrainingLevel
@@ -26,4 +27,5 @@ interface UserPreferencesRepository {
     suspend fun updateReminderDaysOfWeek(days: List<Int>)
 
     suspend fun updateWeeklyGoal(goal: Int)
+    suspend fun updateBackgroundSound(sound: BackgroundSound)
 }

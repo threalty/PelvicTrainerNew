@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.pelvictrainer.domain.model.AccentColor
+import com.pelvictrainer.domain.model.BackgroundSound
 import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.TrainingLevel
@@ -39,6 +40,7 @@ class PreferencesDataStore @Inject constructor(
     private val reminderTimesKey = stringSetPreferencesKey("reminder_times")
     private val reminderDaysKey = stringPreferencesKey("reminder_days")
     private val weeklyGoalKey = intPreferencesKey("weekly_goal")
+    private val backgroundSoundKey = stringPreferencesKey("background_sound")
 
     fun getUserPreferences(): Flow<UserPreferences> {
         return context.dataStore.data.map { prefs ->
@@ -69,7 +71,10 @@ class PreferencesDataStore @Inject constructor(
                 remindersEnabled = prefs[remindersEnabledKey] ?: false,
                 reminderTimes = reminderTimes,
                 reminderDaysOfWeek = reminderDays,
-                weeklyGoal = prefs[weeklyGoalKey]?.coerceIn(1, 7) ?: 3
+                weeklyGoal = prefs[weeklyGoalKey]?.coerceIn(1, 7) ?: 3,
+                backgroundSound = prefs[backgroundSoundKey]?.let {
+                    try { BackgroundSound.valueOf(it) } catch (e: Exception) { BackgroundSound.NONE }
+                } ?: BackgroundSound.NONE
             )
         }
     }
@@ -149,6 +154,12 @@ class PreferencesDataStore @Inject constructor(
     suspend fun updateWeeklyGoal(goal: Int) {
         context.dataStore.edit { prefs ->
             prefs[weeklyGoalKey] = goal.coerceIn(1, 7)
+        }
+    }
+
+    suspend fun updateBackgroundSound(sound: BackgroundSound) {
+        context.dataStore.edit { prefs ->
+            prefs[backgroundSoundKey] = sound.name
         }
     }
 }

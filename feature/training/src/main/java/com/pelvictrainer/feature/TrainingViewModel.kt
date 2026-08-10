@@ -1,6 +1,8 @@
 package com.pelvictrainer.feature
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.content.Intent
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.model.TrainingPhase
 import com.pelvictrainer.domain.model.TrainingPreset
@@ -16,11 +18,17 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TrainingViewModel @Inject constructor(
+    application: Application,
     private val repository: TrainingRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val audio: TrainingAudio,
-    private val haptic: TrainingHaptic
-) : ViewModel() {
+    private val haptic: TrainingHaptic,
+    private val backgroundAudio: BackgroundAudioPlayer
+) : AndroidViewModel(application) {
+
+    companion object {
+        private const val ACTION_UPDATE_WIDGET = "com.pelvictrainer.UPDATE_WIDGET"
+    }
 
     private val _uiState = MutableStateFlow<TrainingUiState>(TrainingUiState.Loading)
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
@@ -77,8 +85,21 @@ class TrainingViewModel @Inject constructor(
             currentRep = 1
         )
 
+        startBackgroundSound()
         triggerPhaseFeedback(currentPhase)
         startTimerLogic()
+    }
+
+    private fun startBackgroundSound() {
+        viewModelScope.launch {
+            val prefs = userPreferencesRepository.userPreferences.first()
+            backgroundAudio.start(prefs.backgroundSound)
+            backgroundAudio.setVolume(prefs.voiceVolume)
+        }
+    }
+
+    private fun stopBackgroundSound() {
+        backgroundAudio.stop()
     }
 
     private fun triggerPhaseFeedback(phase: TrainingPhase) {
@@ -144,21 +165,38 @@ class TrainingViewModel @Inject constructor(
     private fun finishTraining() {
         viewModelScope.launch {
             triggerPhaseFeedback(TrainingPhase.FINISHED)
+            stopBackgroundSound()
             repository.saveTrainingSession(
                 presetId = currentPreset?.id ?: 0L,
                 completedReps = currentPreset?.totalReps ?: 0,
                 durationSeconds = 0L
             )
+
+            notifyWidgetToUpdate()
+
             _uiState.value = TrainingUiState.Finished(currentPreset!!)
         }
     }
 
+    private fun notifyWidgetToUpdate() {
+        try {
+            val intent = Intent(ACTION_UPDATE_WIDGET).apply {
+                setPackage(getApplication<Application>().packageName)
+            }
+            getApplication<Application>().sendBroadcast(intent)
+        } catch (e: Exception) {
+            // Тихо игнорируем — виджет может быть не добавлен
+        }
+    }
+
     fun reset() {
+        stopBackgroundSound()
         currentPreset?.let { _uiState.value = TrainingUiState.Ready(it) }
     }
 
     override fun onCleared() {
         super.onCleared()
         audio.shutdown()
+        backgroundAudio.stop()
     }
 }

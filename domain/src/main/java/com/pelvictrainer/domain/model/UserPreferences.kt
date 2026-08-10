@@ -13,5 +13,6 @@ data class UserPreferences(
     val remindersEnabled: Boolean = false,
     val reminderTimes: List<ReminderConfig> = emptyList(),
     val reminderDaysOfWeek: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7),
-    val weeklyGoal: Int = 3
+    val weeklyGoal: Int = 3,
+    val backgroundSound: BackgroundSound = BackgroundSound.NONE
 )

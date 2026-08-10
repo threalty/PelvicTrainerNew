@@ -48,36 +48,48 @@ android {
 }
 
 dependencies {
+    // Feature модули
     implementation(project(":feature:training"))
-    implementation(project(":domain"))
-    implementation(project(":data"))
     implementation(project(":feature:calendar"))
-    implementation(project(":core:common"))
-    implementation(project(":core:database"))
-    implementation(project(":core:datastore"))
-    implementation(project(":core:designsystem"))
+    implementation(project(":feature:workouts"))
     implementation(project(":feature:statistics"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:achievements"))
-    implementation(project(":feature:workouts"))
 
+    // Core модули
+    implementation(project(":core:database"))
+    implementation(project(":core:datastore"))
+    implementation(project(":core:designsystem"))
+
+    // Domain + Data
+    implementation(project(":domain"))
+    implementation(project(":data"))
+
+    // AndroidX Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime)
+
+    // Hilt
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
 
+    // Hilt + WorkManager
     implementation(libs.hilt.work)
     ksp(libs.hilt.work.compiler)
-
     implementation(libs.work.runtime)
 
+    // Glance (виджеты)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
+    // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
     implementation("androidx.compose.material:material-icons-extended")
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.lifecycle.runtime)
     debugImplementation(libs.compose.ui.tooling)
 }

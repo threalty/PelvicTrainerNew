@@ -3,6 +3,7 @@ package com.pelvictrainer.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.model.AccentColor
+import com.pelvictrainer.domain.model.BackgroundSound
 import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.UserPreferences
@@ -88,6 +89,12 @@ class SettingsViewModel @Inject constructor(
     fun updateWeeklyGoal(goal: Int) {
         viewModelScope.launch {
             userPreferencesRepository.updateWeeklyGoal(goal)
+        }
+    }
+
+    fun updateBackgroundSound(sound: BackgroundSound) {
+        viewModelScope.launch {
+            userPreferencesRepository.updateBackgroundSound(sound)
         }
     }
 }
