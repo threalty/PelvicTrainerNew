@@ -26,31 +26,33 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.pelvictrainer.domain.analytics.AnalyticsParams
+import com.pelvictrainer.domain.analytics.AnalyticsTracker
+import com.pelvictrainer.domain.model.TrainingSession
 import com.pelvictrainer.domain.repository.TrainingRepository
 import com.pelvictrainer.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
+// ===== UI State =====
 data class HomeUiState(
     val weeklyGoal: Int = 3,
     val completedThisWeek: Int = 0,
@@ -65,10 +67,12 @@ data class HomeUiState(
         get() = (weeklyGoal - completedThisWeek).coerceAtLeast(0)
 }
 
+// ===== ViewModel =====
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val trainingRepository: TrainingRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val analytics: AnalyticsTracker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -97,16 +101,32 @@ class HomeViewModel @Inject constructor(
                     totalTrainings = sessions.size
                 )
             }.collect { state ->
+                val prevState = _uiState.value
+
+                // Логируем достижение недельной цели
+                if (!prevState.isGoalReached && state.isGoalReached && state.completedThisWeek > 0) {
+                    analytics.trackEvent(
+                        "weekly_goal_reached",
+                        mapOf(
+                            AnalyticsParams.GOAL_VALUE to state.weeklyGoal,
+                            "completed" to state.completedThisWeek
+                        )
+                    )
+                }
+
                 _uiState.value = state
             }
         }
+
+        // Логируем открытие приложения
+        analytics.trackEvent("app_opened")
     }
 
-    private fun calculateStreak(sessions: List<com.pelvictrainer.domain.model.TrainingSession>): Int {
+    private fun calculateStreak(sessions: List<TrainingSession>): Int {
         if (sessions.isEmpty()) return 0
 
         val trainingDates = sessions.map { session ->
-            java.time.Instant.ofEpochMilli(session.date)
+            Instant.ofEpochMilli(session.date)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate()
         }.distinct().sortedDescending()
@@ -122,7 +142,7 @@ class HomeViewModel @Inject constructor(
 
         var streak = 1
         for (i in 1 until trainingDates.size) {
-            val diff = java.time.temporal.ChronoUnit.DAYS.between(trainingDates[i], trainingDates[i - 1])
+            val diff = ChronoUnit.DAYS.between(trainingDates[i], trainingDates[i - 1])
             if (diff == 1L) {
                 streak++
             } else {
@@ -134,6 +154,7 @@ class HomeViewModel @Inject constructor(
     }
 }
 
+// ===== UI =====
 @Composable
 fun HomeScreen(
     onOpenWorkoutsList: () -> Unit,

@@ -2,6 +2,7 @@ package com.pelvictrainer.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pelvictrainer.domain.analytics.AnalyticsTracker
 import com.pelvictrainer.domain.model.AccentColor
 import com.pelvictrainer.domain.model.BackgroundSound
 import com.pelvictrainer.domain.model.ReminderConfig
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val analytics: AnalyticsTracker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserPreferences())
@@ -32,15 +34,24 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateThemeMode(mode: ThemeMode) {
-        viewModelScope.launch { userPreferencesRepository.updateThemeMode(mode) }
+        viewModelScope.launch {
+            userPreferencesRepository.updateThemeMode(mode)
+            analytics.trackEvent("theme_changed", mapOf("theme_mode" to mode.name))
+        }
     }
 
     fun updateAccentColor(color: AccentColor) {
-        viewModelScope.launch { userPreferencesRepository.updateAccentColor(color) }
+        viewModelScope.launch {
+            userPreferencesRepository.updateAccentColor(color)
+            analytics.trackEvent("accent_changed", mapOf("accent_color" to color.name))
+        }
     }
 
     fun updateVoiceEnabled(enabled: Boolean) {
-        viewModelScope.launch { userPreferencesRepository.updateVoiceEnabled(enabled) }
+        viewModelScope.launch {
+            userPreferencesRepository.updateVoiceEnabled(enabled)
+            analytics.trackEvent("voice_toggled", mapOf("enabled" to enabled))
+        }
     }
 
     fun updateVoiceVolume(volume: Float) {
@@ -48,7 +59,10 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateVibrationEnabled(enabled: Boolean) {
-        viewModelScope.launch { userPreferencesRepository.updateVibrationEnabled(enabled) }
+        viewModelScope.launch {
+            userPreferencesRepository.updateVibrationEnabled(enabled)
+            analytics.trackEvent("vibration_toggled", mapOf("enabled" to enabled))
+        }
     }
 
     fun updateVibrationIntensity(intensity: Float) {
@@ -56,7 +70,11 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateRemindersEnabled(enabled: Boolean) {
-        viewModelScope.launch { userPreferencesRepository.updateRemindersEnabled(enabled) }
+        viewModelScope.launch {
+            userPreferencesRepository.updateRemindersEnabled(enabled)
+            val eventName = if (enabled) "reminder_enabled" else "reminder_disabled"
+            analytics.trackEvent(eventName)
+        }
     }
 
     fun addReminderTime(hour: Int, minute: Int) {
@@ -64,6 +82,10 @@ class SettingsViewModel @Inject constructor(
             val config = ReminderConfig(hour, minute)
             if (config !in _uiState.value.reminderTimes) {
                 userPreferencesRepository.addReminderTime(config)
+                analytics.trackEvent(
+                    "reminder_time_added",
+                    mapOf("hour" to hour, "minute" to minute)
+                )
             }
         }
     }
@@ -71,6 +93,7 @@ class SettingsViewModel @Inject constructor(
     fun removeReminderTime(config: ReminderConfig) {
         viewModelScope.launch {
             userPreferencesRepository.removeReminderTime(config)
+            analytics.trackEvent("reminder_time_removed")
         }
     }
 
@@ -83,18 +106,24 @@ class SettingsViewModel @Inject constructor(
                 currentDays.add(day)
             }
             userPreferencesRepository.updateReminderDaysOfWeek(currentDays.sorted())
+            analytics.trackEvent(
+                "reminder_days_changed",
+                mapOf("days_count" to currentDays.size)
+            )
         }
     }
 
     fun updateWeeklyGoal(goal: Int) {
         viewModelScope.launch {
             userPreferencesRepository.updateWeeklyGoal(goal)
+            analytics.trackEvent("goal_updated", mapOf("goal_value" to goal))
         }
     }
 
     fun updateBackgroundSound(sound: BackgroundSound) {
         viewModelScope.launch {
             userPreferencesRepository.updateBackgroundSound(sound)
+            analytics.trackEvent("sound_changed", mapOf("sound_type" to sound.name))
         }
     }
 }

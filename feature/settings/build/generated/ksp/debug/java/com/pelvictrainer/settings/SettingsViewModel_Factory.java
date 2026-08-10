@@ -1,5 +1,6 @@
 package com.pelvictrainer.settings;
 
+import com.pelvictrainer.domain.analytics.AnalyticsTracker;
 import com.pelvictrainer.domain.repository.UserPreferencesRepository;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
@@ -26,22 +27,28 @@ import javax.inject.Provider;
 public final class SettingsViewModel_Factory implements Factory<SettingsViewModel> {
   private final Provider<UserPreferencesRepository> userPreferencesRepositoryProvider;
 
+  private final Provider<AnalyticsTracker> analyticsProvider;
+
   public SettingsViewModel_Factory(
-      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider) {
+      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider,
+      Provider<AnalyticsTracker> analyticsProvider) {
     this.userPreferencesRepositoryProvider = userPreferencesRepositoryProvider;
+    this.analyticsProvider = analyticsProvider;
   }
 
   @Override
   public SettingsViewModel get() {
-    return newInstance(userPreferencesRepositoryProvider.get());
+    return newInstance(userPreferencesRepositoryProvider.get(), analyticsProvider.get());
   }
 
   public static SettingsViewModel_Factory create(
-      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider) {
-    return new SettingsViewModel_Factory(userPreferencesRepositoryProvider);
+      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider,
+      Provider<AnalyticsTracker> analyticsProvider) {
+    return new SettingsViewModel_Factory(userPreferencesRepositoryProvider, analyticsProvider);
   }
 
-  public static SettingsViewModel newInstance(UserPreferencesRepository userPreferencesRepository) {
-    return new SettingsViewModel(userPreferencesRepository);
+  public static SettingsViewModel newInstance(UserPreferencesRepository userPreferencesRepository,
+      AnalyticsTracker analytics) {
+    return new SettingsViewModel(userPreferencesRepository, analytics);
   }
 }

@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.pelvictrainer.domain.analytics.AnalyticsParams
+import com.pelvictrainer.domain.analytics.AnalyticsTracker
 import com.pelvictrainer.domain.model.TrainingPhase
 import com.pelvictrainer.domain.model.TrainingPreset
 import com.pelvictrainer.domain.repository.TrainingRepository
@@ -23,7 +25,8 @@ class TrainingViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val audio: TrainingAudio,
     private val haptic: TrainingHaptic,
-    private val backgroundAudio: BackgroundAudioPlayer
+    private val backgroundAudio: BackgroundAudioPlayer,
+    private val analytics: AnalyticsTracker
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -37,6 +40,7 @@ class TrainingViewModel @Inject constructor(
     private var currentTimeLeft: Int = 0
     private var currentRepCount: Int = 0
     private var currentPhase: TrainingPhase = TrainingPhase.IDLE
+    private var trainingStartTime: Long = 0L
 
     private var voiceEnabled = true
     private var voiceVolume = 0.8f
@@ -75,6 +79,7 @@ class TrainingViewModel @Inject constructor(
         currentRepCount = preset.totalReps
         currentPhase = TrainingPhase.SQUEEZE
         currentTimeLeft = preset.squeezeTime
+        trainingStartTime = System.currentTimeMillis()
 
         _uiState.value = TrainingUiState.Training(
             preset = preset,
@@ -83,6 +88,16 @@ class TrainingViewModel @Inject constructor(
             timeLeft = currentTimeLeft,
             repsLeft = currentRepCount,
             currentRep = 1
+        )
+
+        // Логируем начало тренировки
+        analytics.trackEvent(
+            "training_started",
+            mapOf(
+                AnalyticsParams.PRESET_ID to preset.id,
+                AnalyticsParams.TRAINING_LEVEL to preset.level.name,
+                AnalyticsParams.REPS to preset.totalReps
+            )
         )
 
         startBackgroundSound()
@@ -166,10 +181,26 @@ class TrainingViewModel @Inject constructor(
         viewModelScope.launch {
             triggerPhaseFeedback(TrainingPhase.FINISHED)
             stopBackgroundSound()
+
+            val durationSeconds = (System.currentTimeMillis() - trainingStartTime) / 1000L
+            val completedReps = currentPreset?.totalReps ?: 0
+            val presetId = currentPreset?.id ?: 0L
+
             repository.saveTrainingSession(
-                presetId = currentPreset?.id ?: 0L,
-                completedReps = currentPreset?.totalReps ?: 0,
-                durationSeconds = 0L
+                presetId = presetId,
+                completedReps = completedReps,
+                durationSeconds = durationSeconds
+            )
+
+            // Логируем завершение тренировки
+            analytics.trackEvent(
+                "training_completed",
+                mapOf(
+                    AnalyticsParams.PRESET_ID to presetId,
+                    AnalyticsParams.TRAINING_LEVEL to (currentPreset?.level?.name ?: "UNKNOWN"),
+                    AnalyticsParams.REPS to completedReps,
+                    AnalyticsParams.DURATION to durationSeconds
+                )
             )
 
             notifyWidgetToUpdate()

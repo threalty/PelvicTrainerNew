@@ -17,6 +17,9 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Передаём AppMetrica ID в приложение
+        buildConfigField("int", "APPMETRICA_APP_ID", "6339955")
     }
 
     buildTypes {
@@ -26,6 +29,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isDebuggable = true
         }
     }
     buildFeatures {
@@ -80,6 +86,9 @@ dependencies {
 
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
+
+    // AppMetrica (аналитика без зависимости от Google)
+    implementation("com.yandex.android:mobmetricalib:5.3.0")
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

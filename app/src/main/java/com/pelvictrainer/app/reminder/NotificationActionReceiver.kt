@@ -6,6 +6,8 @@ import android.content.Intent
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.pelvictrainer.app.analytics.AnalyticsEntryPoint
+import dagger.hilt.android.EntryPointAccessors
 import java.util.concurrent.TimeUnit
 
 class NotificationActionReceiver : BroadcastReceiver() {
@@ -35,6 +37,25 @@ class NotificationActionReceiver : BroadcastReceiver() {
         minute: Int,
         delayMinutes: Long
     ) {
+        // Логируем snooze перед планированием
+        try {
+            val analytics = EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                AnalyticsEntryPoint::class.java
+            ).analyticsTracker()
+
+            analytics.trackEvent(
+                "reminder_snoozed",
+                mapOf(
+                    "snooze_minutes" to delayMinutes,
+                    "original_hour" to hour,
+                    "original_minute" to minute
+                )
+            )
+        } catch (e: Exception) {
+            // Игнорируем ошибки аналитики
+        }
+
         val inputData = Data.Builder()
             .putInt(SnoozeWorker.KEY_HOUR, hour)
             .putInt(SnoozeWorker.KEY_MINUTE, minute)
