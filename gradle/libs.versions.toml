@@ -26,6 +26,10 @@ jetbrainsKotlinJvm = "2.0.21"
 
 glance = "1.1.1"
 
+coroutinesTest = "1.8.1"
+mockk = "1.13.12"
+turbine = "1.1.0"
+
 [libraries]
 
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -70,6 +74,10 @@ glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = 
 glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
 
 junit = { module = "junit:junit", version = "4.13.2" }
+
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 [plugins]
 
