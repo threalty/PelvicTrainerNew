@@ -1,16 +1,15 @@
 package com.pelvictrainer.app
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -18,12 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -36,9 +32,9 @@ import com.pelvictrainer.achievements.AchievementsScreen
 import com.pelvictrainer.calendar.CalendarScreen
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
 import com.pelvictrainer.domain.model.ThemeMode
-import com.pelvictrainer.domain.repository.UserPreferencesRepository
 import com.pelvictrainer.settings.SettingsScreen
 import com.pelvictrainer.statistics.StatisticsScreen
+import com.pelvictrainer.workouts.WorkoutsScreen
 
 sealed class BottomNavItem(
     val route: String,
@@ -46,6 +42,7 @@ sealed class BottomNavItem(
     val label: String
 ) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Главная")
+    object Workouts : BottomNavItem("workouts", Icons.Default.FitnessCenter, "Тренировки")
     object Calendar : BottomNavItem("calendar", Icons.Default.CalendarMonth, "Календарь")
     object Statistics : BottomNavItem("statistics", Icons.Default.BarChart, "Статистика")
     object Achievements : BottomNavItem("achievements", Icons.Default.EmojiEvents, "Достижения")
@@ -55,7 +52,7 @@ sealed class BottomNavItem(
 @Composable
 fun MainScreen(
     navController: NavHostController,
-    onStartTraining: () -> Unit
+    onStartTraining: (Long) -> Unit
 ) {
     val mainNavController = rememberNavController()
     val prefsViewModel: MainScreenViewModel = hiltViewModel()
@@ -86,7 +83,21 @@ fun MainScreen(
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(BottomNavItem.Home.route) {
-                    HomeScreen(onStartTraining = onStartTraining)
+                    HomeScreen(
+                        onOpenWorkoutsList = {
+                            mainNavController.navigate(BottomNavItem.Workouts.route)
+                        }
+                    )
+                }
+                composable(BottomNavItem.Workouts.route) {
+                    WorkoutsScreen(
+                        onNavigateBack = {
+                            mainNavController.popBackStack()
+                        },
+                        onWorkoutSelected = { presetId ->
+                            onStartTraining(presetId)
+                        }
+                    )
                 }
                 composable(BottomNavItem.Calendar.route) {
                     CalendarScreen()
@@ -109,6 +120,7 @@ fun MainScreen(
 private fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
         BottomNavItem.Home,
+        BottomNavItem.Workouts,
         BottomNavItem.Calendar,
         BottomNavItem.Statistics,
         BottomNavItem.Achievements,
@@ -122,14 +134,7 @@ private fun BottomNavigationBar(navController: NavHostController) {
         items.forEach { item ->
             NavigationBarItem(
                 icon = { Icon(item.icon, contentDescription = item.label) },
-                label = {
-                    Text(
-                        text = item.label,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                },
+                label = { Text(item.label) },
                 selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
                 onClick = {
                     navController.navigate(item.route) {

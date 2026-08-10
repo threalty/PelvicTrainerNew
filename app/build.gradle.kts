@@ -60,6 +60,7 @@ dependencies {
     implementation(project(":feature:statistics"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:achievements"))
+    implementation(project(":feature:workouts"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

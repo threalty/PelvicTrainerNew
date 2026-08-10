@@ -109,10 +109,8 @@ fun AppNavigation(
         composable(Screen.Main.route) {
             MainScreen(
                 navController = navController,
-                onStartTraining = {
-                    // Переходим на экран тренировки с первым пресетом
-                    // Пресет будет выбран автоматически на основе сохранённого уровня
-                    navController.navigate(Screen.Training.createRoute(1L))
+                onStartTraining = { presetId ->
+                    navController.navigate(Screen.Training.createRoute(presetId))
                 }
             )
         }

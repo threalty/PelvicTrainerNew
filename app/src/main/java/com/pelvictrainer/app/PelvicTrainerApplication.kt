@@ -1,4 +1,4 @@
-package com.pelvictrainer
+package com.pelvictrainer.app
 
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
