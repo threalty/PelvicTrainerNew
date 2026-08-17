@@ -1,57 +1,60 @@
 package com.pelvictrainer.app
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.pelvictrainer.app.reminder.ReminderScheduler
+import com.pelvictrainer.auth.presentation.SplashScreen
+import com.pelvictrainer.auth.presentation.navigation.authGraph
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var reminderScheduler: ReminderScheduler
-
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            reminderScheduler.scheduleReminders()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-
-            if (!hasPermission) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                reminderScheduler.scheduleReminders()
-            }
-        } else {
-            reminderScheduler.scheduleReminders()
-        }
-
         setContent {
             PelvicTrainerTheme {
-                val navController = rememberNavController()
-                AppNavigation(navController = navController)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    val rootNavController = rememberNavController()
+
+                    NavHost(
+                        navController = rootNavController,
+                        startDestination = "splash",
+                    ) {
+                        // 1. Сплэш — проверка авторизации
+                        composable("splash") {
+                            SplashScreen(navController = rootNavController)
+                        }
+
+                        // 2. Граф авторизации (login / register / profile)
+                        authGraph(navController = rootNavController)
+
+                        // 3. Главный экран с BottomNav (все ваши существующие табы)
+                        composable("main") {
+                            MainScreen(
+                                navController = rootNavController,
+                                onStartTraining = { presetId ->
+                                    // TODO Sprint 8: навигация на экран тренировки
+                                    // Сейчас просто игнорируем — ваше приложение продолжит работать как раньше
+                                },
+                            )
+                        }
+                    }
+                }
             }
         }
     }

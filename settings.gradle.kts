@@ -38,3 +38,8 @@ include(":feature:achievements")
 include(":feature:settings")
 include(":feature:onboarding")
 include(":feature:workouts")
+
+include(":core:network")
+include(":feature:auth")
+include(":core:network")
+include(":feature:auth")

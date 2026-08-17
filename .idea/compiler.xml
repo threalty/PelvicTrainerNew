@@ -3,7 +3,6 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="17">
       <module name="PelvicTrainer.core.navigation" target="21" />
-      <module name="PelvicTrainer.core.network" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>

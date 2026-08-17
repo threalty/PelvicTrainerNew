@@ -3,6 +3,7 @@ package com.pelvictrainer.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.analytics.AnalyticsTracker
+import com.pelvictrainer.domain.auth.AuthRepository
 import com.pelvictrainer.domain.model.AccentColor
 import com.pelvictrainer.domain.model.BackgroundSound
 import com.pelvictrainer.domain.model.ReminderConfig
@@ -16,20 +17,50 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// ===== НОВОЕ: auth состояние =====
+data class AuthUiState(
+    val isLoggedIn: Boolean = false,
+    val userEmail: String? = null,
+    val userName: String? = null,
+)
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val analytics: AnalyticsTracker
+    private val analytics: AnalyticsTracker,
+    private val authRepository: AuthRepository, // НОВОЕ
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserPreferences())
     val uiState: StateFlow<UserPreferences> = _uiState.asStateFlow()
+
+    // НОВОЕ: отдельный поток для auth
+    private val _authState = MutableStateFlow(AuthUiState())
+    val authState: StateFlow<AuthUiState> = _authState.asStateFlow()
 
     init {
         viewModelScope.launch {
             userPreferencesRepository.userPreferences.collect { prefs ->
                 _uiState.value = prefs
             }
+        }
+        // НОВОЕ: загрузка auth состояния
+        viewModelScope.launch {
+            val loggedIn = authRepository.isLoggedIn()
+            _authState.value = AuthUiState(
+                isLoggedIn = loggedIn,
+                userEmail = authRepository.getCurrentUserEmail(),
+                userName = authRepository.getCurrentUserName(),
+            )
+        }
+    }
+
+    // НОВОЕ: выход из аккаунта
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.logout()
+            analytics.trackEvent("logout")
+            _authState.value = AuthUiState(isLoggedIn = false)
         }
     }
 

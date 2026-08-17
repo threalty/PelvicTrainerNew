@@ -48,6 +48,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.pelvictrainer.achievements.AchievementsScreen
+import com.pelvictrainer.auth.presentation.ProfileScreen
 import com.pelvictrainer.calendar.CalendarScreen
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
 import com.pelvictrainer.domain.model.ThemeMode
@@ -58,7 +59,7 @@ import com.pelvictrainer.workouts.WorkoutsScreen
 sealed class BottomNavItem(
     val route: String,
     val icon: ImageVector,
-    val label: String
+    val label: String,
 ) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Главная")
     object Workouts : BottomNavItem("workouts", Icons.Default.FitnessCenter, "Тренировки")
@@ -68,15 +69,19 @@ sealed class BottomNavItem(
     object Settings : BottomNavItem("settings_nav", Icons.Default.Settings, "Настройки")
 }
 
+private object ProfileRoute {
+    const val ROUTE = "profile"
+}
+
 @Composable
 fun MainScreen(
     navController: NavHostController,
-    onStartTraining: (Long) -> Unit
+    onStartTraining: (Long) -> Unit,
 ) {
     val mainNavController = rememberNavController()
     val prefsViewModel: MainScreenViewModel = hiltViewModel()
     val prefs by prefsViewModel.repository.userPreferences.collectAsState(
-        initial = com.pelvictrainer.domain.model.UserPreferences()
+        initial = com.pelvictrainer.domain.model.UserPreferences(),
     )
 
     val isDarkTheme = when (prefs.themeMode) {
@@ -89,17 +94,17 @@ fun MainScreen(
 
     PelvicTrainerTheme(
         darkTheme = isDarkTheme,
-        primary = accentColor
+        primary = accentColor,
     ) {
         Scaffold(
             bottomBar = {
                 ExpandedBottomBar(mainNavController = mainNavController)
-            }
+            },
         ) { innerPadding ->
             NavHost(
                 navController = mainNavController,
                 startDestination = BottomNavItem.Home.route,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
             ) {
                 composable(BottomNavItem.Home.route) {
                     HomeScreen(
@@ -111,7 +116,7 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
+                        },
                     )
                 }
                 composable(BottomNavItem.Workouts.route) {
@@ -121,7 +126,7 @@ fun MainScreen(
                         },
                         onWorkoutSelected = { presetId ->
                             onStartTraining(presetId)
-                        }
+                        },
                     )
                 }
                 composable(BottomNavItem.Calendar.route) {
@@ -134,7 +139,7 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
+                        },
                     )
                 }
                 composable(BottomNavItem.Statistics.route) {
@@ -147,7 +152,7 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
+                        },
                     )
                 }
                 composable(BottomNavItem.Achievements.route) {
@@ -160,11 +165,21 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
+                        },
                     )
                 }
                 composable(BottomNavItem.Settings.route) {
-                    SettingsScreen()
+                    SettingsScreen(navController = mainNavController)
+                }
+
+                // ===== НОВОЕ: экран профиля внутри табов =====
+                composable(ProfileRoute.ROUTE) {
+                    ProfileScreen(
+                        onLoggedOut = {
+                            // После выхода — возвращаемся на настройки
+                            mainNavController.popBackStack()
+                        },
+                    )
                 }
             }
         }
@@ -179,7 +194,7 @@ private fun ExpandedBottomBar(mainNavController: NavHostController) {
         BottomNavItem.Calendar,
         BottomNavItem.Statistics,
         BottomNavItem.Achievements,
-        BottomNavItem.Settings
+        BottomNavItem.Settings,
     )
 
     val navBackStackEntry by mainNavController.currentBackStackEntryAsState()
@@ -189,7 +204,7 @@ private fun ExpandedBottomBar(mainNavController: NavHostController) {
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp,
-        shadowElevation = 8.dp
+        shadowElevation = 8.dp,
     ) {
         Row(
             modifier = Modifier
@@ -197,7 +212,7 @@ private fun ExpandedBottomBar(mainNavController: NavHostController) {
                 .height(68.dp)
                 .padding(horizontal = 6.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             items.forEach { item ->
                 val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
@@ -214,7 +229,7 @@ private fun ExpandedBottomBar(mainNavController: NavHostController) {
                             restoreState = true
                         }
                     },
-                    modifier = Modifier.weight(if (isSelected) 3.5f else 1f)
+                    modifier = Modifier.weight(if (isSelected) 3.5f else 1f),
                 )
             }
         }
@@ -226,7 +241,7 @@ private fun ExpandedNavItem(
     item: BottomNavItem,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val containerColor = if (isSelected) {
         MaterialTheme.colorScheme.primaryContainer
@@ -243,12 +258,12 @@ private fun ExpandedNavItem(
             .animateContentSize(
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
+                    stiffness = Spring.StiffnessLow,
+                ),
             )
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = item.icon,
@@ -258,7 +273,7 @@ private fun ExpandedNavItem(
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(22.dp),
         )
 
         if (isSelected) {
@@ -269,7 +284,7 @@ private fun ExpandedNavItem(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
-                softWrap = false
+                softWrap = false,
             )
         }
     }
