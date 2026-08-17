@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// ===== НОВОЕ: auth состояние =====
+// ===== НОВОЕ: состояние авторизации =====
 data class AuthUiState(
     val isLoggedIn: Boolean = false,
     val userEmail: String? = null,
@@ -28,7 +28,7 @@ data class AuthUiState(
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val analytics: AnalyticsTracker,
-    private val authRepository: AuthRepository, // НОВОЕ
+    private val authRepository: AuthRepository,  // НОВОЕ
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserPreferences())

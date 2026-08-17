@@ -48,7 +48,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.pelvictrainer.achievements.AchievementsScreen
+import com.pelvictrainer.auth.presentation.LoginScreen
 import com.pelvictrainer.auth.presentation.ProfileScreen
+import com.pelvictrainer.auth.presentation.RegisterScreen
 import com.pelvictrainer.calendar.CalendarScreen
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
 import com.pelvictrainer.domain.model.ThemeMode
@@ -172,11 +174,35 @@ fun MainScreen(
                     SettingsScreen(navController = mainNavController)
                 }
 
-                // ===== НОВОЕ: экран профиля внутри табов =====
+                // ===== Профиль (залогиненные пользователи) =====
                 composable(ProfileRoute.ROUTE) {
                     ProfileScreen(
                         onLoggedOut = {
-                            // После выхода — возвращаемся на настройки
+                            mainNavController.popBackStack()
+                        },
+                    )
+                }
+
+                // ===== Вход (для гостевого режима, из настроек) =====
+                composable("login") {
+                    LoginScreen(
+                        onLoginSuccess = {
+                            // После входа — вернуться на настройки
+                            mainNavController.popBackStack()
+                        },
+                        onNavigateToRegister = {
+                            mainNavController.navigate("register")
+                        },
+                    )
+                }
+
+                // ===== Регистрация (для гостевого режима, из настроек) =====
+                composable("register") {
+                    RegisterScreen(
+                        onRegisterSuccess = {
+                            mainNavController.popBackStack()
+                        },
+                        onNavigateToLogin = {
                             mainNavController.popBackStack()
                         },
                     )
