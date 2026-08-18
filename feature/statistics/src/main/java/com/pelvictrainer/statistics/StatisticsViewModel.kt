@@ -19,12 +19,17 @@ data class StatisticsUiState(
     val bestStreak: Int = 0,
     val averageDurationSeconds: Long = 0,
     val last7DaysSessions: List<Pair<String, Int>> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    // ===== НОВОЕ: синхронизация =====
+    val syncedCount: Int = 0,
+    val unsyncedCount: Int = 0,
+    val isLoggedIn: Boolean = false,
 )
 
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
-    private val trainingRepository: TrainingRepository
+    private val trainingRepository: TrainingRepository,
+    private val authRepository: com.pelvictrainer.domain.auth.AuthRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatisticsUiState())
@@ -32,6 +37,7 @@ class StatisticsViewModel @Inject constructor(
 
     init {
         loadStatistics()
+        loadAuthState()
     }
 
     private fun loadStatistics() {
@@ -39,6 +45,13 @@ class StatisticsViewModel @Inject constructor(
             trainingRepository.getSessions().collect { sessions ->
                 _uiState.value = calculateStatistics(sessions)
             }
+        }
+    }
+
+    private fun loadAuthState() {
+        viewModelScope.launch {
+            val loggedIn = authRepository.isLoggedIn()
+            _uiState.value = _uiState.value.copy(isLoggedIn = loggedIn)
         }
     }
 
@@ -54,16 +67,20 @@ class StatisticsViewModel @Inject constructor(
     private fun calculateStatistics(sessions: List<TrainingSession>): StatisticsUiState {
         if (sessions.isEmpty()) {
             return StatisticsUiState(
-                last7DaysSessions = generateEmptyWeek()
+                last7DaysSessions = generateEmptyWeek(),
+                isLoggedIn = _uiState.value.isLoggedIn,
             )
         }
 
         val totalSessions = sessions.size
         val totalDuration = sessions.sumOf { it.durationSeconds }
         val averageDuration = totalDuration / totalSessions
-
         val (currentStreak, bestStreak) = calculateStreaks(sessions)
         val last7Days = generateLast7DaysData(sessions)
+
+        // ===== НОВОЕ: считаем synced/unsynced =====
+        val syncedCount = sessions.count { it.synced }
+        val unsyncedCount = sessions.count { !it.synced }
 
         return StatisticsUiState(
             totalSessions = totalSessions,
@@ -72,7 +89,10 @@ class StatisticsViewModel @Inject constructor(
             bestStreak = bestStreak,
             averageDurationSeconds = averageDuration,
             last7DaysSessions = last7Days,
-            isLoading = false
+            isLoading = false,
+            syncedCount = syncedCount,
+            unsyncedCount = unsyncedCount,
+            isLoggedIn = _uiState.value.isLoggedIn,
         )
     }
 
@@ -126,7 +146,6 @@ class StatisticsViewModel @Inject constructor(
     private fun generateLast7DaysData(sessions: List<TrainingSession>): List<Pair<String, Int>> {
         val today = LocalDate.now()
         val dayNames = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-
         return (6 downTo 0).map { daysAgo ->
             val date = today.minusDays(daysAgo.toLong())
             val count = sessions.count { session ->
@@ -140,7 +159,6 @@ class StatisticsViewModel @Inject constructor(
     private fun generateEmptyWeek(): List<Pair<String, Int>> {
         val today = LocalDate.now()
         val dayNames = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-
         return (6 downTo 0).map { daysAgo ->
             val date = today.minusDays(daysAgo.toLong())
             Pair(dayNames[(date.dayOfWeek.value - 1) % 7], 0)

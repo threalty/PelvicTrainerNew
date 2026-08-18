@@ -1,4 +1,4 @@
-package com.pelvictrainer.network.di
+﻿package com.pelvictrainer.network.di
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.pelvictrainer.network.AuthInterceptor

@@ -1,4 +1,4 @@
-package com.pelvictrainer.network
+﻿package com.pelvictrainer.network
 
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -13,7 +13,6 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
 
-        // Не добавляем токен к эндпоинтам авторизации
         if (original.url.encodedPath.contains("/auth/")) {
             return chain.proceed(original)
         }

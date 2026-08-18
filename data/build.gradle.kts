@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)  // ← ДОБАВИТЬ
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
 }
@@ -39,7 +40,7 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":core:database"))
     implementation(project(":core:datastore"))
-    implementation(project(":core:network"))
+    implementation(project(":core:network"))  // ← ДОЛЖНО БЫТЬ
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.hilt.android)
@@ -55,6 +56,9 @@ dependencies {
     implementation(libs.work.runtime)
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // kotlinx.serialization для DTO
+    implementation(libs.kotlinx.serialization.json)
 
     // AppMetrica для аналитики
     implementation("com.yandex.android:mobmetricalib:5.3.0")

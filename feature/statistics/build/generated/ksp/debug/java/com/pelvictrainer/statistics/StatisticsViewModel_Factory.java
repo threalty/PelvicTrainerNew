@@ -1,5 +1,6 @@
 package com.pelvictrainer.statistics;
 
+import com.pelvictrainer.domain.auth.AuthRepository;
 import com.pelvictrainer.domain.repository.TrainingRepository;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
@@ -26,21 +27,27 @@ import javax.inject.Provider;
 public final class StatisticsViewModel_Factory implements Factory<StatisticsViewModel> {
   private final Provider<TrainingRepository> trainingRepositoryProvider;
 
-  public StatisticsViewModel_Factory(Provider<TrainingRepository> trainingRepositoryProvider) {
+  private final Provider<AuthRepository> authRepositoryProvider;
+
+  public StatisticsViewModel_Factory(Provider<TrainingRepository> trainingRepositoryProvider,
+      Provider<AuthRepository> authRepositoryProvider) {
     this.trainingRepositoryProvider = trainingRepositoryProvider;
+    this.authRepositoryProvider = authRepositoryProvider;
   }
 
   @Override
   public StatisticsViewModel get() {
-    return newInstance(trainingRepositoryProvider.get());
+    return newInstance(trainingRepositoryProvider.get(), authRepositoryProvider.get());
   }
 
   public static StatisticsViewModel_Factory create(
-      Provider<TrainingRepository> trainingRepositoryProvider) {
-    return new StatisticsViewModel_Factory(trainingRepositoryProvider);
+      Provider<TrainingRepository> trainingRepositoryProvider,
+      Provider<AuthRepository> authRepositoryProvider) {
+    return new StatisticsViewModel_Factory(trainingRepositoryProvider, authRepositoryProvider);
   }
 
-  public static StatisticsViewModel newInstance(TrainingRepository trainingRepository) {
-    return new StatisticsViewModel(trainingRepository);
+  public static StatisticsViewModel newInstance(TrainingRepository trainingRepository,
+      AuthRepository authRepository) {
+    return new StatisticsViewModel(trainingRepository, authRepository);
   }
 }

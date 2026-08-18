@@ -1,4 +1,4 @@
-package com.pelvictrainer.network
+﻿package com.pelvictrainer.network
 
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
@@ -18,7 +18,6 @@ class TokenAuthenticator @Inject constructor(
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
-        // Защита от бесконечного цикла повторов
         if (response.request.header(HEADER_RETRY) != null) {
             tokenStorage.clear()
             return null

@@ -5,5 +5,7 @@ data class TrainingSession(
     val presetId: Long,
     val date: Long,
     val durationSeconds: Long,
-    val repeats: Int
+    val repeats: Int,
+    val synced: Boolean = true,
+    val serverSessionId: Int? = null,
 )

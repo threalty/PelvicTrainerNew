@@ -1,12 +1,11 @@
-package com.pelvictrainer.network
+﻿package com.pelvictrainer.network
 
+import com.pelvictrainer.network.dto.MySessionsResponseDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
-
-// ===== Auth =====
 
 @Serializable
 data class LoginRequest(val email: String, val password: String)
@@ -29,8 +28,6 @@ data class RefreshRequest(@SerialName("refresh_token") val refreshToken: String)
 
 @Serializable
 data class RefreshResponse(@SerialName("access_token") val accessToken: String)
-
-// ===== Тренировки =====
 
 @Serializable
 data class SessionLogRequest(
@@ -82,10 +79,7 @@ data class DeviceRegisterRequest(
     @SerialName("app_version") val appVersion: String? = null,
 )
 
-// ===== API интерфейс =====
-
 interface PelvicApi {
-
     @POST("api/v1/auth/register")
     suspend fun register(@Body body: RegisterRequest): AuthResponse
 
@@ -103,6 +97,9 @@ interface PelvicApi {
 
     @POST("api/v1/sessions")
     suspend fun logSession(@Body body: SessionLogRequest): SessionLogResponse
+
+    @GET("api/v1/me/sessions")
+    suspend fun getMySessions(): MySessionsResponseDto
 
     @GET("api/v1/me/stats")
     suspend fun getMyStats(): MyStatsDto

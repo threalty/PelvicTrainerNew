@@ -9,7 +9,7 @@ import com.pelvictrainer.database.entities.TrainingSessionEntity
     entities = [
         TrainingSessionEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class PelvicDatabase : RoomDatabase() {

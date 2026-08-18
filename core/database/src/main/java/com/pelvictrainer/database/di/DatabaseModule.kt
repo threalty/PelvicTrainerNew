@@ -24,7 +24,9 @@ object DatabaseModule {
             context,
             PelvicDatabase::class.java,
             "pelvic_trainer.db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides

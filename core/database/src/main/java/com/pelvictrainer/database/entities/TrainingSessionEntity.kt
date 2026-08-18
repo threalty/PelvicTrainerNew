@@ -10,5 +10,7 @@ data class TrainingSessionEntity(
     val presetId: Long,
     val date: Long,
     val durationSeconds: Long,
-    val repeats: Int
+    val repeats: Int,
+    val synced: Boolean = false,
+    val serverSessionId: Int? = null,
 )

@@ -1,4 +1,4 @@
-package com.pelvictrainer.network
+﻿package com.pelvictrainer.network
 
 import android.content.Context
 import android.content.SharedPreferences

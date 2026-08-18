@@ -21,6 +21,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -122,6 +124,7 @@ fun StatisticsScreen(
                                 )
                             }
                         }
+
                         AnimatedVisibility(
                             visible = true,
                             modifier = Modifier.weight(1f),
@@ -176,6 +179,7 @@ fun StatisticsScreen(
                                 )
                             }
                         }
+
                         AnimatedVisibility(
                             visible = true,
                             modifier = Modifier.weight(1f),
@@ -228,9 +232,7 @@ fun StatisticsScreen(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-
                                 Spacer(modifier = Modifier.height(16.dp))
-
                                 WeekBarChart(
                                     data = uiState.last7DaysSessions,
                                     modifier = Modifier
@@ -238,6 +240,27 @@ fun StatisticsScreen(
                                         .height(140.dp)
                                 )
                             }
+                        }
+                    }
+
+                    // ===== НОВОЕ: карточка синхронизации (только для залогиненных) =====
+                    if (uiState.isLoggedIn) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn() + slideInVertically(
+                                initialOffsetY = { it / 3 },
+                                animationSpec = tween(
+                                    durationMillis = 400,
+                                    delayMillis = 500
+                                )
+                            )
+                        ) {
+                            SyncStatusCard(
+                                syncedCount = uiState.syncedCount,
+                                unsyncedCount = uiState.unsyncedCount,
+                            )
                         }
                     }
 
@@ -278,6 +301,97 @@ private fun StatCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             valueContent()
+        }
+    }
+}
+
+// ===== НОВОЕ: карточка статуса синхронизации =====
+@Composable
+private fun SyncStatusCard(
+    syncedCount: Int,
+    unsyncedCount: Int,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (unsyncedCount > 0) {
+                MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (unsyncedCount > 0) Icons.Default.CloudOff else Icons.Default.Cloud,
+                    contentDescription = null,
+                    tint = if (unsyncedCount > 0) {
+                        MaterialTheme.colorScheme.tertiary
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (unsyncedCount > 0) "Ожидает синхронизации" else "Синхронизация",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "☁️ Синхронизировано",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "$syncedCount тренировок",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                if (unsyncedCount > 0) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "⏳ Ожидает сети",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "$unsyncedCount тренировок",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                }
+            }
+
+            if (unsyncedCount > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Тренировки будут отправлены на сервер автоматически при подключении к интернету",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+            }
         }
     }
 }

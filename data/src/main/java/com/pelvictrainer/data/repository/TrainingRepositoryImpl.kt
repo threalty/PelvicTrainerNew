@@ -49,10 +49,31 @@ class TrainingRepositoryImpl @Inject constructor(
                 presetId = presetId,
                 date = System.currentTimeMillis(),
                 durationSeconds = durationSeconds,
-                repeats = completedReps
+                repeats = completedReps,
+                synced = false,  // ← НОВОЕ: помечаем как не отправленное на сервер
+                serverSessionId = null,
             )
         )
     }
 
     override suspend fun deleteAllSessions() = dao.deleteAll()
+
+    // ===== НОВОЕ: методы для синхронизации =====
+
+    override suspend fun getUnsyncedSessions(): List<TrainingSession> =
+        dao.getUnsyncedSessions().map { it.toDomain() }
+
+    override suspend fun markAsSynced(localId: Long, serverSessionId: Int) {
+        dao.markAsSynced(localId, serverSessionId)
+    }
+
+    override suspend fun hasDuplicateSession(date: Long, presetId: Long, duration: Long): Boolean =
+        dao.hasDuplicateSession(date, presetId, duration)
+
+    override suspend fun insertFromServer(session: TrainingSession) {
+        // При загрузке с сервера — synced = true, чтобы не отправлять обратно
+        dao.insertSession(session.toEntity())
+    }
+
+    override suspend fun deleteSyncedSessions() = dao.deleteSyncedSessions()
 }

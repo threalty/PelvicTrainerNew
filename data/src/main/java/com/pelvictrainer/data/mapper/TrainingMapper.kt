@@ -9,7 +9,9 @@ fun TrainingSessionEntity.toDomain(): TrainingSession {
         presetId = presetId,
         date = date,
         durationSeconds = durationSeconds,
-        repeats = repeats
+        repeats = repeats,
+        synced = synced,
+        serverSessionId = serverSessionId,
     )
 }
 
@@ -19,6 +21,8 @@ fun TrainingSession.toEntity(): TrainingSessionEntity {
         presetId = presetId,
         date = date,
         durationSeconds = durationSeconds,
-        repeats = repeats
+        repeats = repeats,
+        synced = synced,
+        serverSessionId = serverSessionId,
     )
 }
