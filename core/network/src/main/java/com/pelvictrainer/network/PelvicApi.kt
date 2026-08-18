@@ -79,6 +79,36 @@ data class DeviceRegisterRequest(
     @SerialName("app_version") val appVersion: String? = null,
 )
 
+// ===== НОВОЕ: Платежи =====
+
+@Serializable
+data class CreatePaymentRequest(val plan: String)
+
+@Serializable
+data class CreatePaymentResponse(
+    @SerialName("payment_id") val paymentId: Int,
+    val status: String,
+    val message: String,
+)
+
+@Serializable
+data class PaymentDto(
+    val id: Int,
+    @SerialName("user_id") val userId: Int,
+    @SerialName("amount_cents") val amountCents: Int,
+    val currency: String,
+    val plan: String,
+    val status: String,
+    val description: String? = null,
+    @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
+data class MyPaymentsResponse(
+    val payments: List<PaymentDto>,
+    val count: Int,
+)
+
 interface PelvicApi {
     @POST("api/v1/auth/register")
     suspend fun register(@Body body: RegisterRequest): AuthResponse
@@ -109,4 +139,12 @@ interface PelvicApi {
 
     @POST("api/v1/devices")
     suspend fun registerDevice(@Body body: DeviceRegisterRequest)
+
+    // ===== НОВОЕ: Платежи =====
+
+    @POST("api/v1/payments/create")
+    suspend fun createPayment(@Body body: CreatePaymentRequest): CreatePaymentResponse
+
+    @GET("api/v1/me/payments")
+    suspend fun getMyPayments(): MyPaymentsResponse
 }

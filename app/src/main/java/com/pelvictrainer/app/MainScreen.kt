@@ -36,18 +36,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.pelvictrainer.achievements.AchievementsScreen
+import com.pelvictrainer.app.legal.LegalDocument
+import com.pelvictrainer.app.legal.LegalDocumentScreen
 import com.pelvictrainer.auth.presentation.LoginScreen
 import com.pelvictrainer.auth.presentation.ProfileScreen
 import com.pelvictrainer.auth.presentation.RegisterScreen
@@ -134,9 +137,8 @@ fun MainScreen(
                         },
                     )
                 }
-
-                composable(BottomNavItem.Achievements.route) {
-                    AchievementsScreen(
+                composable(BottomNavItem.Calendar.route) {
+                    CalendarScreen(
                         onNavigateToWorkouts = {
                             mainNavController.navigate(BottomNavItem.Workouts.route) {
                                 popUpTo(mainNavController.graph.findStartDestination().id) {
@@ -145,13 +147,9 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        },
-                        onNavigateToPremium = {
-                            mainNavController.navigate("premium")
-                        },
+                        }
                     )
                 }
-
                 composable(BottomNavItem.Statistics.route) {
                     StatisticsScreen(
                         onNavigateToWorkouts = {
@@ -189,6 +187,9 @@ fun MainScreen(
                         navController = mainNavController,
                         onNavigateToPremium = {
                             mainNavController.navigate("premium")
+                        },
+                        onNavigateToLegal = { document ->
+                            mainNavController.navigate("legal/$document")
                         },
                     )
                 }
@@ -229,6 +230,26 @@ fun MainScreen(
                 // ===== Premium экран =====
                 composable("premium") {
                     PremiumScreen(
+                        onNavigateBack = {
+                            mainNavController.popBackStack()
+                        },
+                    )
+                }
+
+                // ===== Юридические документы (НОВОЕ) =====
+                composable(
+                    route = "legal/{document}",
+                    arguments = listOf(navArgument("document") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val documentName = backStackEntry.arguments?.getString("document") ?: "privacy"
+                    val document = when (documentName) {
+                        "privacy" -> LegalDocument.PRIVACY
+                        "terms" -> LegalDocument.TERMS
+                        "disclaimer" -> LegalDocument.DISCLAIMER
+                        else -> LegalDocument.PRIVACY
+                    }
+                    LegalDocumentScreen(
+                        document = document,
                         onNavigateBack = {
                             mainNavController.popBackStack()
                         },

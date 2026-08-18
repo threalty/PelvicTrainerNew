@@ -70,12 +70,29 @@ class SubscriptionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun activatePremium(plan: String, expiresAt: Long?) {
+        if (tokenStorage.isLoggedIn) {
+            try {
+                Log.d(TAG, "🌐 Отправка платежа на сервер: plan=$plan")
+                val response = api.createPayment(
+                    com.pelvictrainer.network.CreatePaymentRequest(plan)
+                )
+                Log.d(TAG, "✅ Сервер: payment_id=${response.paymentId}, status=${response.status}")
+                // Обновляем локальный кэш с сервера (там теперь правильные данные)
+                refreshFromServer()
+                return
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Не удалось создать платёж: ${e.message}")
+                // Продолжаем с локальной активацией как fallback
+            }
+        }
+
+        // Fallback: локальная активация (если нет сети или пользователь не залогинен)
         context.subscriptionDataStore.edit { prefs ->
             prefs[KEY_IS_PREMIUM] = true
             prefs[KEY_PLAN] = plan
             prefs[KEY_EXPIRES_AT] = expiresAt ?: 0L
         }
-        Log.d(TAG, "✅ Premium активирован: plan=$plan")
+        Log.d(TAG, "📱 Локальная активация: plan=$plan")
     }
 
     override suspend fun deactivatePremium() {

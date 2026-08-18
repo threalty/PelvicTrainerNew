@@ -18,17 +18,22 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Policy
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -67,10 +73,10 @@ fun SettingsScreen(
     navController: NavController? = null,
     viewModel: SettingsViewModel = hiltViewModel(),
     onNavigateToPremium: () -> Unit = {},
+    onNavigateToLegal: (String) -> Unit = {},
 ) {
     val prefs by viewModel.uiState.collectAsState()
     val authState by viewModel.authState.collectAsState()
-
     val isPremium by viewModel.isPremium.collectAsState(initial = false)
 
     Scaffold(
@@ -355,7 +361,6 @@ fun SettingsScreen(
 
             // ===== Тренировка =====
             SettingsSection(title = "Тренировка") {
-                // Голосовые подсказки — доступны всем
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -388,7 +393,6 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Вибрация — только PREMIUM
                 if (isPremium) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -594,6 +598,39 @@ fun SettingsScreen(
                 }
             }
 
+            // ===== Документы (НОВОЕ) =====
+            SettingsSection(title = "Документы") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column {
+                        LegalRow(
+                            icon = Icons.Default.Policy,
+                            title = "Политика конфиденциальности",
+                            subtitle = "Как мы обрабатываем ваши данные",
+                            onClick = { onNavigateToLegal("privacy") }
+                        )
+                        HorizontalDivider()
+                        LegalRow(
+                            icon = Icons.Default.Description,
+                            title = "Пользовательское соглашение",
+                            subtitle = "Условия использования и подписок",
+                            onClick = { onNavigateToLegal("terms") }
+                        )
+                        HorizontalDivider()
+                        LegalRow(
+                            icon = Icons.Default.Warning,
+                            title = "Медицинский дисклеймер",
+                            subtitle = "Обязательно к прочтению",
+                            onClick = { onNavigateToLegal("disclaimer") }
+                        )
+                    }
+                }
+            }
+
             // ===== О приложении =====
             SettingsSection(title = "О приложении") {
                 Card(
@@ -612,6 +649,46 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+}
+
+@Composable
+private fun LegalRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
