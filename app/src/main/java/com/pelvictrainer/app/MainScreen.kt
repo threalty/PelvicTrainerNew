@@ -118,7 +118,7 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        },
+                        }
                     )
                 }
                 composable(BottomNavItem.Workouts.route) {
@@ -129,10 +129,14 @@ fun MainScreen(
                         onWorkoutSelected = { presetId ->
                             onStartTraining(presetId)
                         },
+                        onNavigateToPremium = {
+                            mainNavController.navigate("premium")
+                        },
                     )
                 }
-                composable(BottomNavItem.Calendar.route) {
-                    CalendarScreen(
+
+                composable(BottomNavItem.Achievements.route) {
+                    AchievementsScreen(
                         onNavigateToWorkouts = {
                             mainNavController.navigate(BottomNavItem.Workouts.route) {
                                 popUpTo(mainNavController.graph.findStartDestination().id) {
@@ -142,8 +146,12 @@ fun MainScreen(
                                 restoreState = true
                             }
                         },
+                        onNavigateToPremium = {
+                            mainNavController.navigate("premium")
+                        },
                     )
                 }
+
                 composable(BottomNavItem.Statistics.route) {
                     StatisticsScreen(
                         onNavigateToWorkouts = {
@@ -154,6 +162,9 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
+                        },
+                        onNavigateToPremium = {
+                            mainNavController.navigate("premium")
                         },
                     )
                 }
@@ -168,13 +179,21 @@ fun MainScreen(
                                 restoreState = true
                             }
                         },
+                        onNavigateToPremium = {
+                            mainNavController.navigate("premium")
+                        },
                     )
                 }
                 composable(BottomNavItem.Settings.route) {
-                    SettingsScreen(navController = mainNavController)
+                    SettingsScreen(
+                        navController = mainNavController,
+                        onNavigateToPremium = {
+                            mainNavController.navigate("premium")
+                        },
+                    )
                 }
 
-                // ===== Профиль (залогиненные пользователи) =====
+                // ===== Профиль =====
                 composable(ProfileRoute.ROUTE) {
                     ProfileScreen(
                         onLoggedOut = {
@@ -183,11 +202,10 @@ fun MainScreen(
                     )
                 }
 
-                // ===== Вход (для гостевого режима, из настроек) =====
+                // ===== Вход =====
                 composable("login") {
                     LoginScreen(
                         onLoginSuccess = {
-                            // После входа — вернуться на настройки
                             mainNavController.popBackStack()
                         },
                         onNavigateToRegister = {
@@ -196,13 +214,22 @@ fun MainScreen(
                     )
                 }
 
-                // ===== Регистрация (для гостевого режима, из настроек) =====
+                // ===== Регистрация =====
                 composable("register") {
                     RegisterScreen(
                         onRegisterSuccess = {
                             mainNavController.popBackStack()
                         },
                         onNavigateToLogin = {
+                            mainNavController.popBackStack()
+                        },
+                    )
+                }
+
+                // ===== Premium экран =====
+                composable("premium") {
+                    PremiumScreen(
+                        onNavigateBack = {
                             mainNavController.popBackStack()
                         },
                     )

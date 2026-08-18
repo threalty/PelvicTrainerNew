@@ -10,6 +10,7 @@ import com.pelvictrainer.domain.model.TrainingPhase
 import com.pelvictrainer.domain.model.TrainingPreset
 import com.pelvictrainer.domain.repository.TrainingRepository
 import com.pelvictrainer.domain.repository.UserPreferencesRepository
+import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,7 @@ class TrainingViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val audio: TrainingAudio,
     private val haptic: TrainingHaptic,
+    private val subscriptionRepository: SubscriptionRepository,
     private val backgroundAudio: BackgroundAudioPlayer,
     private val analytics: AnalyticsTracker
 ) : AndroidViewModel(application) {
@@ -90,7 +92,6 @@ class TrainingViewModel @Inject constructor(
             currentRep = 1
         )
 
-        // Логируем начало тренировки
         analytics.trackEvent(
             "training_started",
             mapOf(
@@ -103,6 +104,10 @@ class TrainingViewModel @Inject constructor(
         startBackgroundSound()
         triggerPhaseFeedback(currentPhase)
         startTimerLogic()
+    }
+
+    suspend fun canStartTraining(): Boolean {
+        return subscriptionRepository.canStartTraining()
     }
 
     private fun startBackgroundSound() {
@@ -192,7 +197,6 @@ class TrainingViewModel @Inject constructor(
                 durationSeconds = durationSeconds
             )
 
-            // Логируем завершение тренировки
             analytics.trackEvent(
                 "training_completed",
                 mapOf(

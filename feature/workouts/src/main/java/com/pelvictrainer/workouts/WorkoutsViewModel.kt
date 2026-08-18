@@ -6,11 +6,15 @@ import com.pelvictrainer.domain.model.TrainingLevel
 import com.pelvictrainer.domain.model.TrainingPreset
 import com.pelvictrainer.domain.repository.TrainingRepository
 import com.pelvictrainer.domain.repository.UserPreferencesRepository
+import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,7 +32,8 @@ data class WorkoutsUiState(
 @HiltViewModel
 class WorkoutsViewModel @Inject constructor(
     private val trainingRepository: TrainingRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val subscriptionRepository: SubscriptionRepository,
 ) : ViewModel() {
 
     companion object {
@@ -41,6 +46,20 @@ class WorkoutsViewModel @Inject constructor(
 
     private val _levelUpEvent = MutableStateFlow<TrainingLevel?>(null)
     val levelUpEvent: StateFlow<TrainingLevel?> = _levelUpEvent.asStateFlow()
+
+    // ===== Premium состояние (реактивные) =====
+    val isPremium = subscriptionRepository.subscriptionState.map { it.isPremiumActive }
+
+    // ИСПРАВЛЕНО: теперь реактивный — обновляется при изменении подписки
+    val availablePresetIds: StateFlow<List<Long>> = subscriptionRepository.subscriptionState
+        .map { state ->
+            if (state.isPremiumActive) listOf(1L, 2L, 3L) else listOf(1L)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = listOf(1L)
+        )
 
     init {
         loadWorkouts()

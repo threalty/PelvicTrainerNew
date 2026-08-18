@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pelvictrainer.designsystem.components.AnimatedCounter
 import com.pelvictrainer.designsystem.components.EmptyState
+import com.pelvictrainer.designsystem.components.PremiumLockedCard
 import com.pelvictrainer.designsystem.components.PullToRefreshBox
 import com.pelvictrainer.designsystem.util.rememberHapticHelper
 import com.pelvictrainer.domain.model.Achievement
@@ -53,11 +54,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun AchievementsScreen(
     viewModel: AchievementsViewModel = hiltViewModel(),
-    onNavigateToWorkouts: () -> Unit = {}
+    onNavigateToWorkouts: () -> Unit = {},
+    onNavigateToPremium: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val hapticHelper = rememberHapticHelper()
     val coroutineScope = rememberCoroutineScope()
+
+    val isPremium by viewModel.isPremium.collectAsState(initial = false)
 
     Scaffold(
         topBar = {
@@ -66,102 +70,120 @@ fun AchievementsScreen(
             )
         }
     ) { paddingValues ->
-        PullToRefreshBox(
-            isRefreshing = uiState.isLoading,
-            onRefresh = {
-                coroutineScope.launch {
-                    viewModel.refresh()
-                }
-            },
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            if (uiState.achievements.isEmpty() && !uiState.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    EmptyState(
-                        icon = Icons.Default.EmojiEvents,
-                        title = "Достижения скоро появятся",
-                        description = "Начните тренироваться, чтобы разблокировать свои первые достижения и награды",
-                        primaryActionText = "Начать тренировку",
-                        onPrimaryActionClick = {
-                            hapticHelper.mediumTap()
-                            onNavigateToWorkouts()
-                        }
-                    )
-                }
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+        if (!isPremium) {
+            // ===== FREE: полная блокировка =====
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                PremiumLockedCard(
+                    title = "Достижения",
+                    description = "Система наград, достижений и мотивации доступна в Premium версии",
+                    onUpgradeClick = onNavigateToPremium,
+                )
+            }
+        } else {
+            // ===== PREMIUM: существующий функционал =====
+            PullToRefreshBox(
+                isRefreshing = uiState.isLoading,
+                onRefresh = {
+                    coroutineScope.launch {
+                        viewModel.refresh()
+                    }
+                },
+                modifier = Modifier.padding(paddingValues)
+            ) {
+                if (uiState.achievements.isEmpty() && !uiState.isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(
+                        EmptyState(
+                            icon = Icons.Default.EmojiEvents,
+                            title = "Достижения скоро появятся",
+                            description = "Начните тренироваться, чтобы разблокировать свои первые достижения и награды",
+                            primaryActionText = "Начать тренировку",
+                            onPrimaryActionClick = {
+                                hapticHelper.mediumTap()
+                                onNavigateToWorkouts()
+                            }
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Ваш прогресс",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    AnimatedCounter(
-                                        targetValue = uiState.unlockedCount,
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Text(
-                                        text = " / ${uiState.totalCount}",
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
-                            }
-                            Text(
-                                text = "🏆",
-                                style = MaterialTheme.typography.displayLarge
+                                .padding(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
                             )
-                        }
-                    }
-
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        itemsIndexed(uiState.achievements) { index, achievement ->
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = fadeIn(
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        delayMillis = (index * 80).coerceAtMost(500)
-                                    )
-                                ) + slideInHorizontally(
-                                    initialOffsetX = { -it / 3 },
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        delayMillis = (index * 80).coerceAtMost(500)
-                                    )
-                                )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                AchievementCard(achievement = achievement)
+                                Column {
+                                    Text(
+                                        text = "Ваш прогресс",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        AnimatedCounter(
+                                            targetValue = uiState.unlockedCount,
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        Text(
+                                            text = " / ${uiState.totalCount}",
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "🏆",
+                                    style = MaterialTheme.typography.displayLarge
+                                )
+                            }
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            itemsIndexed(uiState.achievements) { index, achievement ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn(
+                                        animationSpec = tween(
+                                            durationMillis = 300,
+                                            delayMillis = (index * 80).coerceAtMost(500)
+                                        )
+                                    ) + slideInHorizontally(
+                                        initialOffsetX = { -it / 3 },
+                                        animationSpec = tween(
+                                            durationMillis = 300,
+                                            delayMillis = (index * 80).coerceAtMost(500)
+                                        )
+                                    )
+                                ) {
+                                    AchievementCard(achievement = achievement)
+                                }
                             }
                         }
                     }

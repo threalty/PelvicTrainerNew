@@ -6,10 +6,12 @@ import com.pelvictrainer.domain.model.Achievement
 import com.pelvictrainer.domain.model.AchievementType
 import com.pelvictrainer.domain.model.TrainingSession
 import com.pelvictrainer.domain.repository.TrainingRepository
+import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -24,11 +26,15 @@ data class AchievementsUiState(
 
 @HiltViewModel
 class AchievementsViewModel @Inject constructor(
-    private val trainingRepository: TrainingRepository
+    private val trainingRepository: TrainingRepository,
+    private val subscriptionRepository: SubscriptionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AchievementsUiState())
     val uiState: StateFlow<AchievementsUiState> = _uiState.asStateFlow()
+
+    // ===== НОВОЕ: Premium состояние =====
+    val isPremium = subscriptionRepository.subscriptionState.map { it.isPremiumActive }
 
     init {
         loadAchievements()

@@ -17,9 +17,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,16 +30,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,11 +58,18 @@ import com.pelvictrainer.domain.model.TrainingPreset
 fun WorkoutsScreen(
     viewModel: WorkoutsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onWorkoutSelected: (Long) -> Unit
+    onWorkoutSelected: (Long) -> Unit,
+    onNavigateToPremium: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val levelUpEvent by viewModel.levelUpEvent.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val isPremium by viewModel.isPremium.collectAsState(initial = false)
+    val availablePresetIds by viewModel.availablePresetIds.collectAsState(initial = listOf(1L))
+
+    var showPremiumDialog by remember { mutableStateOf(false) }
+    var lockedPresetName by remember { mutableStateOf("") }
 
     LaunchedEffect(levelUpEvent) {
         levelUpEvent?.let { newLevel ->
@@ -118,11 +132,129 @@ fun WorkoutsScreen(
                 }
             } else {
                 items(uiState.presets) { preset ->
-                    WorkoutCard(
-                        preset = preset,
-                        isRecommended = preset.level == uiState.userLevel,
-                        onClick = { onWorkoutSelected(preset.id) }
+                    val isAvailable = preset.id in availablePresetIds
+                    val isRecommended = preset.level == uiState.userLevel && isAvailable
+
+                    if (isAvailable) {
+                        WorkoutCard(
+                            preset = preset,
+                            isRecommended = isRecommended,
+                            onClick = { onWorkoutSelected(preset.id) }
+                        )
+                    } else {
+                        LockedWorkoutCard(
+                            preset = preset,
+                            onClick = {
+                                lockedPresetName = preset.name
+                                showPremiumDialog = true
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (showPremiumDialog) {
+        AlertDialog(
+            onDismissRequest = { showPremiumDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Доступно в Premium") },
+            text = {
+                Text("Тренировка «$lockedPresetName» доступна только в Premium версии. Оформите подписку чтобы разблокировать все программы тренировок.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPremiumDialog = false
+                        onNavigateToPremium()
+                    }
+                ) {
+                    Text("Оформить Premium")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPremiumDialog = false }) {
+                    Text("Позже")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun LockedWorkoutCard(
+    preset: TrainingPreset,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = preset.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Заблокировано",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = preset.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
+                }
+
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                WorkoutInfoChip(
+                    icon = Icons.Default.Schedule,
+                    text = calculateTotalDuration(preset),
+                    isRecommended = false
+                )
+                Button(onClick = onClick) {
+                    Text("Premium")
                 }
             }
         }

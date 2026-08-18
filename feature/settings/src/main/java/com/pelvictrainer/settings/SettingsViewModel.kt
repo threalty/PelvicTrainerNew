@@ -10,14 +10,15 @@ import com.pelvictrainer.domain.model.ReminderConfig
 import com.pelvictrainer.domain.model.ThemeMode
 import com.pelvictrainer.domain.model.UserPreferences
 import com.pelvictrainer.domain.repository.UserPreferencesRepository
+import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// ===== НОВОЕ: состояние авторизации =====
 data class AuthUiState(
     val isLoggedIn: Boolean = false,
     val userEmail: String? = null,
@@ -28,15 +29,17 @@ data class AuthUiState(
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val analytics: AnalyticsTracker,
-    private val authRepository: AuthRepository,  // НОВОЕ
+    private val authRepository: AuthRepository,
+    val subscriptionRepository: SubscriptionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserPreferences())
     val uiState: StateFlow<UserPreferences> = _uiState.asStateFlow()
 
-    // НОВОЕ: отдельный поток для auth
     private val _authState = MutableStateFlow(AuthUiState())
     val authState: StateFlow<AuthUiState> = _authState.asStateFlow()
+
+    val isPremium = subscriptionRepository.subscriptionState.map { it.isPremiumActive }
 
     init {
         viewModelScope.launch {
@@ -44,7 +47,6 @@ class SettingsViewModel @Inject constructor(
                 _uiState.value = prefs
             }
         }
-        // НОВОЕ: загрузка auth состояния
         viewModelScope.launch {
             val loggedIn = authRepository.isLoggedIn()
             _authState.value = AuthUiState(
@@ -55,7 +57,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    // НОВОЕ: выход из аккаунта
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()

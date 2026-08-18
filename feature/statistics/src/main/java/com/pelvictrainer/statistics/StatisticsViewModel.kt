@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.model.TrainingSession
 import com.pelvictrainer.domain.repository.TrainingRepository
+import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -20,7 +22,6 @@ data class StatisticsUiState(
     val averageDurationSeconds: Long = 0,
     val last7DaysSessions: List<Pair<String, Int>> = emptyList(),
     val isLoading: Boolean = false,
-    // ===== НОВОЕ: синхронизация =====
     val syncedCount: Int = 0,
     val unsyncedCount: Int = 0,
     val isLoggedIn: Boolean = false,
@@ -30,10 +31,13 @@ data class StatisticsUiState(
 class StatisticsViewModel @Inject constructor(
     private val trainingRepository: TrainingRepository,
     private val authRepository: com.pelvictrainer.domain.auth.AuthRepository,
+    val subscriptionRepository: SubscriptionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatisticsUiState())
     val uiState: StateFlow<StatisticsUiState> = _uiState.asStateFlow()
+
+    val isPremium = subscriptionRepository.subscriptionState.map { it.isPremiumActive }
 
     init {
         loadStatistics()
@@ -78,7 +82,6 @@ class StatisticsViewModel @Inject constructor(
         val (currentStreak, bestStreak) = calculateStreaks(sessions)
         val last7Days = generateLast7DaysData(sessions)
 
-        // ===== НОВОЕ: считаем synced/unsynced =====
         val syncedCount = sessions.count { it.synced }
         val unsyncedCount = sessions.count { !it.synced }
 

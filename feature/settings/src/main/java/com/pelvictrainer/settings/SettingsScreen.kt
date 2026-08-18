@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.pelvictrainer.designsystem.components.PremiumLockedRow
 import com.pelvictrainer.domain.model.AccentColor
 import com.pelvictrainer.domain.model.BackgroundSound
 import com.pelvictrainer.domain.model.ThemeMode
@@ -63,11 +64,14 @@ import com.pelvictrainer.domain.model.ThemeMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    navController: NavController? = null,  // НОВОЕ: для навигации на профиль
-    viewModel: SettingsViewModel = hiltViewModel()
+    navController: NavController? = null,
+    viewModel: SettingsViewModel = hiltViewModel(),
+    onNavigateToPremium: () -> Unit = {},
 ) {
     val prefs by viewModel.uiState.collectAsState()
-    val authState by viewModel.authState.collectAsState()  // НОВОЕ
+    val authState by viewModel.authState.collectAsState()
+
+    val isPremium by viewModel.isPremium.collectAsState(initial = false)
 
     Scaffold(
         topBar = {
@@ -82,7 +86,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ===== НОВОЕ: Аккаунт =====
+            // ===== Аккаунт =====
             SettingsSection(title = "Аккаунт") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -185,73 +189,100 @@ fun SettingsScreen(
                 }
             }
 
-            // ===== Внешний вид =====
+            // ===== Внешний вид (только PREMIUM) =====
             SettingsSection(title = "Внешний вид") {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Тема приложения",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                if (isPremium) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            ThemeMode.entries.forEach { mode ->
-                                ThemeChip(
-                                    text = when (mode) {
-                                        ThemeMode.SYSTEM -> "Системная"
-                                        ThemeMode.LIGHT -> "Светлая"
-                                        ThemeMode.DARK -> "Тёмная"
-                                    },
-                                    isSelected = prefs.themeMode == mode,
-                                    onClick = { viewModel.updateThemeMode(mode) },
-                                    modifier = Modifier.weight(1f)
-                                )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Тема приложения",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                ThemeMode.entries.forEach { mode ->
+                                    ThemeChip(
+                                        text = when (mode) {
+                                            ThemeMode.SYSTEM -> "Системная"
+                                            ThemeMode.LIGHT -> "Светлая"
+                                            ThemeMode.DARK -> "Тёмная"
+                                        },
+                                        isSelected = prefs.themeMode == mode,
+                                        onClick = { viewModel.updateThemeMode(mode) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Акцентный цвет",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            AccentColor.entries.forEach { color ->
-                                AccentColorDot(
-                                    color = Color(color.argb),
-                                    isSelected = prefs.accentColor == color,
-                                    onClick = { viewModel.updateAccentColor(color) }
-                                )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Акцентный цвет",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                AccentColor.entries.forEach { color ->
+                                    AccentColorDot(
+                                        color = Color(color.argb),
+                                        isSelected = prefs.accentColor == color,
+                                        onClick = { viewModel.updateAccentColor(color) }
+                                    )
+                                }
                             }
+                        }
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Внешний вид",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            PremiumLockedRow(
+                                title = "Тема приложения",
+                                onUpgradeClick = onNavigateToPremium,
+                            )
+                            PremiumLockedRow(
+                                title = "Акцентный цвет",
+                                onUpgradeClick = onNavigateToPremium,
+                            )
                         }
                     }
                 }
             }
 
-            // ===== Цели =====
+            // ===== Цели (доступны всем) =====
             SettingsSection(title = "Цели") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -324,6 +355,7 @@ fun SettingsScreen(
 
             // ===== Тренировка =====
             SettingsSection(title = "Тренировка") {
+                // Голосовые подсказки — доступны всем
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -356,85 +388,118 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        SettingsToggleRow(
-                            title = "Вибрация",
-                            description = "Вибрация при смене фаз",
-                            checked = prefs.vibrationEnabled,
-                            onCheckedChange = { viewModel.updateVibrationEnabled(it) }
+                // Вибрация — только PREMIUM
+                if (isPremium) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
-
-                        if (prefs.vibrationEnabled) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = "Интенсивность: ${(prefs.vibrationIntensity * 100).toInt()}%",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            SettingsToggleRow(
+                                title = "Вибрация",
+                                description = "Вибрация при смене фаз",
+                                checked = prefs.vibrationEnabled,
+                                onCheckedChange = { viewModel.updateVibrationEnabled(it) }
                             )
-                            Slider(
-                                value = prefs.vibrationIntensity,
-                                onValueChange = { viewModel.updateVibrationIntensity(it) },
-                                valueRange = 0f..1f
-                            )
-                        }
-                    }
-                }
-            }
 
-            // ===== Фоновые звуки =====
-            SettingsSection(title = "Фоновые звуки") {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Звук во время тренировки",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "Расслабляющие фоновые звуки для концентрации",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        BackgroundSound.entries.forEach { sound ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { viewModel.updateBackgroundSound(sound) }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = prefs.backgroundSound == sound,
-                                    onClick = { viewModel.updateBackgroundSound(sound) }
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+                            if (prefs.vibrationEnabled) {
+                                Spacer(modifier = Modifier.height(12.dp))
                                 Text(
-                                    text = sound.displayName,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    text = "Интенсивность: ${(prefs.vibrationIntensity * 100).toInt()}%",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Slider(
+                                    value = prefs.vibrationIntensity,
+                                    onValueChange = { viewModel.updateVibrationIntensity(it) },
+                                    valueRange = 0f..1f
                                 )
                             }
                         }
                     }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            PremiumLockedRow(
+                                title = "Вибрация",
+                                onUpgradeClick = onNavigateToPremium,
+                            )
+                        }
+                    }
                 }
             }
 
-            // ===== Напоминания =====
+            // ===== Фоновые звуки (только PREMIUM) =====
+            SettingsSection(title = "Фоновые звуки") {
+                if (isPremium) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Звук во время тренировки",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Расслабляющие фоновые звуки для концентрации",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            BackgroundSound.entries.forEach { sound ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { viewModel.updateBackgroundSound(sound) }
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = prefs.backgroundSound == sound,
+                                        onClick = { viewModel.updateBackgroundSound(sound) }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = sound.displayName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            PremiumLockedRow(
+                                title = "Звук во время тренировки",
+                                onUpgradeClick = onNavigateToPremium,
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ===== Напоминания (доступны всем) =====
             SettingsSection(title = "Напоминания") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),

@@ -2,6 +2,7 @@ package com.pelvictrainer.statistics;
 
 import com.pelvictrainer.domain.auth.AuthRepository;
 import com.pelvictrainer.domain.repository.TrainingRepository;
+import com.pelvictrainer.domain.subscription.SubscriptionRepository;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
@@ -29,25 +30,30 @@ public final class StatisticsViewModel_Factory implements Factory<StatisticsView
 
   private final Provider<AuthRepository> authRepositoryProvider;
 
+  private final Provider<SubscriptionRepository> subscriptionRepositoryProvider;
+
   public StatisticsViewModel_Factory(Provider<TrainingRepository> trainingRepositoryProvider,
-      Provider<AuthRepository> authRepositoryProvider) {
+      Provider<AuthRepository> authRepositoryProvider,
+      Provider<SubscriptionRepository> subscriptionRepositoryProvider) {
     this.trainingRepositoryProvider = trainingRepositoryProvider;
     this.authRepositoryProvider = authRepositoryProvider;
+    this.subscriptionRepositoryProvider = subscriptionRepositoryProvider;
   }
 
   @Override
   public StatisticsViewModel get() {
-    return newInstance(trainingRepositoryProvider.get(), authRepositoryProvider.get());
+    return newInstance(trainingRepositoryProvider.get(), authRepositoryProvider.get(), subscriptionRepositoryProvider.get());
   }
 
   public static StatisticsViewModel_Factory create(
       Provider<TrainingRepository> trainingRepositoryProvider,
-      Provider<AuthRepository> authRepositoryProvider) {
-    return new StatisticsViewModel_Factory(trainingRepositoryProvider, authRepositoryProvider);
+      Provider<AuthRepository> authRepositoryProvider,
+      Provider<SubscriptionRepository> subscriptionRepositoryProvider) {
+    return new StatisticsViewModel_Factory(trainingRepositoryProvider, authRepositoryProvider, subscriptionRepositoryProvider);
   }
 
   public static StatisticsViewModel newInstance(TrainingRepository trainingRepository,
-      AuthRepository authRepository) {
-    return new StatisticsViewModel(trainingRepository, authRepository);
+      AuthRepository authRepository, SubscriptionRepository subscriptionRepository) {
+    return new StatisticsViewModel(trainingRepository, authRepository, subscriptionRepository);
   }
 }

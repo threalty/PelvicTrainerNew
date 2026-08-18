@@ -5,9 +5,14 @@ import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.pelvictrainer.data.sync.SyncScheduler
+import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import com.yandex.metrica.YandexMetrica
 import com.yandex.metrica.YandexMetricaConfig
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -18,6 +23,11 @@ class PelvicTrainerApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var syncScheduler: SyncScheduler
+
+    @Inject
+    lateinit var subscriptionRepository: SubscriptionRepository
+
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
         private const val TAG = "PelvicTrainerApp"
@@ -34,6 +44,7 @@ class PelvicTrainerApplication : Application(), Configuration.Provider {
         super.onCreate()
         initAppMetrica()
         syncScheduler.schedule()
+        refreshSubscription()
     }
 
     private fun initAppMetrica() {
@@ -48,6 +59,12 @@ class PelvicTrainerApplication : Application(), Configuration.Provider {
             Log.d(TAG, "✅ AppMetrica успешно инициализирована (App ID: $APP_ID)")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Ошибка инициализации AppMetrica: ${e.message}")
+        }
+    }
+
+    private fun refreshSubscription() {
+        applicationScope.launch {
+            subscriptionRepository.refreshFromServer()
         }
     }
 }

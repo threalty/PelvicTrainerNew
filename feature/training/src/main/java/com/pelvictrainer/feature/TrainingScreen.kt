@@ -18,6 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,11 +29,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -44,15 +51,20 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pelvictrainer.domain.model.TrainingPhase
 import com.pelvictrainer.domain.model.TrainingPreset
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainingScreen(
     presetId: Long,
     onNavigateBack: () -> Unit,
-    viewModel: TrainingViewModel = hiltViewModel()
+    viewModel: TrainingViewModel = hiltViewModel(),
+    onNavigateToPremium: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    var showDailyLimitDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(presetId) {
         viewModel.loadPreset(presetId)
@@ -89,7 +101,16 @@ fun TrainingScreen(
                     progress = 0f,
                     timeLeft = 0,
                     repsLeft = state.preset.totalReps,
-                    onStart = { viewModel.startTraining(state.preset) }
+                    onStart = {
+                        scope.launch {
+                            val canStart = viewModel.canStartTraining()
+                            if (canStart) {
+                                viewModel.startTraining(state.preset)
+                            } else {
+                                showDailyLimitDialog = true
+                            }
+                        }
+                    }
                 )
 
                 is TrainingUiState.Training -> TrainingContent(
@@ -103,7 +124,16 @@ fun TrainingScreen(
 
                 is TrainingUiState.Finished -> TrainingFinishedContent(
                     preset = state.preset,
-                    onRestart = { viewModel.startTraining(state.preset) },
+                    onRestart = {
+                        scope.launch {
+                            val canStart = viewModel.canStartTraining()
+                            if (canStart) {
+                                viewModel.startTraining(state.preset)
+                            } else {
+                                showDailyLimitDialog = true
+                            }
+                        }
+                    },
                     onBack = onNavigateBack
                 )
 
@@ -116,6 +146,38 @@ fun TrainingScreen(
                 }
             }
         }
+    }
+
+    if (showDailyLimitDialog) {
+        AlertDialog(
+            onDismissRequest = { showDailyLimitDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Дневной лимит") },
+            text = {
+                Text("В бесплатной версии доступна 1 тренировка в сутки. Сегодня вы уже тренировались.\n\nОформите Premium для неограниченного количества тренировок.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDailyLimitDialog = false
+                        onNavigateToPremium()
+                    }
+                ) {
+                    Text("Оформить Premium")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDailyLimitDialog = false }) {
+                    Text("ОК")
+                }
+            }
+        )
     }
 }
 
@@ -173,7 +235,6 @@ private fun TrainingRing(phase: TrainingPhase, progress: Float) {
     val strokeWidth = 28.dp
     val size = 240.dp
 
-    // Получаем цвета ДО входа в Canvas scope
     val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
 
     val activeColor = when (phase) {
@@ -203,7 +264,6 @@ private fun TrainingRing(phase: TrainingPhase, progress: Float) {
         val center = Offset(radius, radius)
         val strokeWidthPx = strokeWidth.toPx()
 
-        // Фоновое кольцо - используем уже полученный цвет
         drawCircle(
             color = surfaceVariantColor,
             radius = radius,

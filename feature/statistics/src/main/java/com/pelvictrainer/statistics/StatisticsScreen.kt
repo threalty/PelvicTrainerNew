@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pelvictrainer.designsystem.components.AnimatedCounter
 import com.pelvictrainer.designsystem.components.EmptyState
+import com.pelvictrainer.designsystem.components.PremiumLockedCard
 import com.pelvictrainer.designsystem.components.PullToRefreshBox
 import com.pelvictrainer.designsystem.util.rememberHapticHelper
 import kotlinx.coroutines.launch
@@ -59,11 +60,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel(),
-    onNavigateToWorkouts: () -> Unit = {}
+    onNavigateToWorkouts: () -> Unit = {},
+    onNavigateToPremium: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val hapticHelper = rememberHapticHelper()
     val coroutineScope = rememberCoroutineScope()
+
+    val isPremium by viewModel.isPremium.collectAsState(initial = false)
 
     Scaffold(
         topBar = {
@@ -207,43 +211,50 @@ fun StatisticsScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn() + slideInVertically(
-                            initialOffsetY = { it / 3 },
-                            animationSpec = tween(
-                                durationMillis = 400,
-                                delayMillis = 400
-                            )
-                        )
-                    ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    if (isPremium) {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn() + slideInVertically(
+                                initialOffsetY = { it / 3 },
+                                animationSpec = tween(
+                                    durationMillis = 400,
+                                    delayMillis = 400
+                                )
                             )
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
                             ) {
-                                Text(
-                                    text = "Последние 7 дней",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                WeekBarChart(
-                                    data = uiState.last7DaysSessions,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(140.dp)
-                                )
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = "Последние 7 дней",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    WeekBarChart(
+                                        data = uiState.last7DaysSessions,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(140.dp)
+                                    )
+                                }
                             }
                         }
+                    } else {
+                        PremiumLockedCard(
+                            title = "График тренировок",
+                            description = "Детальная статистика по дням доступна в Premium",
+                            onUpgradeClick = onNavigateToPremium,
+                        )
                     }
 
-                    // ===== НОВОЕ: карточка синхронизации (только для залогиненных) =====
                     if (uiState.isLoggedIn) {
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -305,7 +316,6 @@ private fun StatCard(
     }
 }
 
-// ===== НОВОЕ: карточка статуса синхронизации =====
 @Composable
 private fun SyncStatusCard(
     syncedCount: Int,
