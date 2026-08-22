@@ -5,55 +5,44 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 class HapticHelper(private val context: Context) {
 
+    @RequiresPermission(android.Manifest.permission.VIBRATE)
     fun lightTap() {
         vibrate(10L, 50)
     }
 
+    @RequiresPermission(android.Manifest.permission.VIBRATE)
     fun mediumTap() {
         vibrate(20L, 100)
     }
 
-    fun heavyTap() {
-        vibrate(35L, 150)
-    }
-
-    fun success() {
-        vibratePattern(longArrayOf(0, 30, 50, 30), intArrayOf(0, 80, 0, 80))
-    }
-
+    @RequiresPermission(android.Manifest.permission.VIBRATE)
     fun error() {
         vibratePattern(longArrayOf(0, 50, 50, 50), intArrayOf(0, 150, 0, 150))
     }
 
+    @RequiresPermission(android.Manifest.permission.VIBRATE)
     private fun vibrate(durationMs: Long, amplitude: Int) {
         try {
             val vibrator = getVibrator() ?: return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(durationMs)
-            }
+            // minSdk 26 (Oreo), поэтому VibrationEffect доступен всегда без проверок
+            vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude))
         } catch (e: Exception) {
             // Игнорируем ошибки вибрации
         }
     }
 
+    @RequiresPermission(android.Manifest.permission.VIBRATE)
     private fun vibratePattern(timings: LongArray, amplitudes: IntArray) {
         try {
             val vibrator = getVibrator() ?: return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(timings, -1)
-            }
+            vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
         } catch (e: Exception) {
             // Игнорируем ошибки вибрации
         }

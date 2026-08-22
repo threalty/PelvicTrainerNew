@@ -2,6 +2,7 @@
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,24 +29,24 @@ class TokenStorage @Inject constructor(
 
     var accessToken: String?
         get() = prefs.getString(KEY_ACCESS, null)
-        set(value) = prefs.edit().putString(KEY_ACCESS, value).apply()
+        set(value) = prefs.edit { putString(KEY_ACCESS, value) }
 
     var refreshToken: String?
         get() = prefs.getString(KEY_REFRESH, null)
-        set(value) = prefs.edit().putString(KEY_REFRESH, value).apply()
+        set(value) = prefs.edit { putString(KEY_REFRESH, value) }
 
     var userEmail: String?
         get() = prefs.getString(KEY_EMAIL, null)
-        set(value) = prefs.edit().putString(KEY_EMAIL, value).apply()
+        set(value) = prefs.edit { putString(KEY_EMAIL, value) }
 
     var userName: String?
         get() = prefs.getString(KEY_NAME, null)
-        set(value) = prefs.edit().putString(KEY_NAME, value).apply()
+        set(value) = prefs.edit { putString(KEY_NAME, value) }
 
     val isLoggedIn: Boolean
         get() = refreshToken != null
 
-    fun clear() = prefs.edit().clear().apply()
+    fun clear() = prefs.edit { clear() }
 
     private companion object {
         const val KEY_ACCESS = "access_token"

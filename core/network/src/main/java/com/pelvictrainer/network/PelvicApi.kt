@@ -1,4 +1,6 @@
-﻿package com.pelvictrainer.network
+﻿@file:OptIn(kotlinx.serialization.InternalSerializationApi::class, kotlinx.serialization.ExperimentalSerializationApi::class)
+
+package com.pelvictrainer.network
 
 import com.pelvictrainer.network.dto.MySessionsResponseDto
 import kotlinx.serialization.SerialName
@@ -15,10 +17,12 @@ data class RegisterRequest(
     val email: String,
     val password: String,
     val name: String,
-    @SerialName("consent_privacy") val consentPrivacy: Boolean = true,
-    @SerialName("consent_health") val consentHealth: Boolean = true,
-    @SerialName("consent_age") val consentAge: Boolean = true,
+    // Добавьте эти три строки:
+    val consentPrivacy: Boolean,
+    val consentHealth: Boolean,
+    val consentAge: Boolean
 )
+
 @Serializable
 data class UserDto(val id: Int, val email: String, val name: String)
 
@@ -85,8 +89,6 @@ data class DeviceRegisterRequest(
     @SerialName("app_version") val appVersion: String? = null,
 )
 
-// ===== НОВОЕ: Платежи =====
-
 @Serializable
 data class CreatePaymentRequest(val plan: String)
 
@@ -145,8 +147,6 @@ interface PelvicApi {
 
     @POST("api/v1/devices")
     suspend fun registerDevice(@Body body: DeviceRegisterRequest)
-
-    // ===== НОВОЕ: Платежи =====
 
     @POST("api/v1/payments/create")
     suspend fun createPayment(@Body body: CreatePaymentRequest): CreatePaymentResponse

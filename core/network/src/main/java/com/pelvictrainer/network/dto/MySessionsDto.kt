@@ -1,4 +1,6 @@
-﻿package com.pelvictrainer.network.dto
+﻿@file:OptIn(kotlinx.serialization.InternalSerializationApi::class, kotlinx.serialization.ExperimentalSerializationApi::class)
+
+package com.pelvictrainer.network.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

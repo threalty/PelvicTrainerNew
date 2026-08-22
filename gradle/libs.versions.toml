@@ -1,5 +1,4 @@
 [versions]
-kotlinSerialization = "1.7.3"
 agp = "8.6.1"
 kotlin = "2.0.21"
 
@@ -16,9 +15,7 @@ hilt = "2.52"
 hiltNavigation = "1.2.0"
 
 room = "2.6.1"
-
 datastore = "1.1.1"
-
 work = "2.10.0"
 
 ksp = "2.0.21-1.0.28"
@@ -29,6 +26,7 @@ glance = "1.1.1"
 coroutinesTest = "1.8.1"
 mockk = "1.13.12"
 turbine = "1.1.0"
+junit = "4.13.2"
 
 retrofit = "2.11.0"
 okhttp = "4.12.0"
@@ -36,54 +34,42 @@ kotlinxSerialization = "1.7.3"
 retrofitSerialization = "1.0.0"
 securityCrypto = "1.1.0-alpha06"
 
+# Новая версия AppMetrica (старая mobmetricalib deprecated)
+appmetrica = "6.1.0"
+
 [libraries]
-
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
-
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
-
 androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
-
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
-
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
-
 compose-ui = { module = "androidx.compose.ui:ui", version.ref = "composeUi" }
-
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "composeMaterial3" }
-
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "composeUi" }
 
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
-
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
-
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigation" }
-
 hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltNavigation" }
-
 hilt-work-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltNavigation" }
 
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
-
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
-
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
-
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 
 glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
 
-junit = { module = "junit:junit", version = "4.13.2" }
-
+junit = { module = "junit:junit", version.ref = "junit" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+arch-core-testing = { module = "androidx.arch.core:core-testing", version = "2.2.0" }
 
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
@@ -92,17 +78,14 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 retrofit-kotlinx-serialization = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofitSerialization" }
 security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
 
+appmetrica-analytics = { module = "io.appmetrica.analytics:analytics", version.ref = "appmetrica" }
+
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 android-application = { id = "com.android.application", version.ref = "agp" }
-
 android-library = { id = "com.android.library", version.ref = "agp" }
-
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }

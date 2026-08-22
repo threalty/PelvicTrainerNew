@@ -107,10 +107,8 @@ dependencies {
     // Network
     implementation(project(":core:network"))
 
-    implementation(project(":core:network"))
     implementation(project(":feature:auth"))
     implementation("androidx.work:work-runtime-ktx:2.10.0")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
-
 }

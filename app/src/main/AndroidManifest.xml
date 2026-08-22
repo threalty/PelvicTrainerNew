@@ -47,15 +47,6 @@
                 android:resource="@xml/training_widget_info" />
         </receiver>
 
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup"
-                tools:node="remove" />
-        </provider>
+        <!-- Блок androidx.startup с WorkManagerInitializer полностью удален для корректной on-demand инициализации -->
     </application>
 </manifest>

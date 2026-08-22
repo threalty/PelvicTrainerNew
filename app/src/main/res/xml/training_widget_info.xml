@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:minWidth="250dp"
     android:minHeight="180dp"
     android:targetCellWidth="3"
@@ -13,4 +14,5 @@
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/training_widget_preview"
     android:previewLayout="@layout/training_widget_preview"
-    android:description="@string/widget_description" />
+    android:description="@string/widget_description"
+    tools:targetApi="31" />
