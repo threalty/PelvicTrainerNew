@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed class Screen(val route: String) {
+    object AgeConsent : Screen("age_consent")
     object Splash : Screen("splash")
     object Onboarding : Screen("onboarding")
     object LevelSelection : Screen("level_selection")
@@ -43,15 +44,25 @@ class NavigationViewModel @Inject constructor(
     private val _isOnboardingCompleted = MutableStateFlow(false)
     val isOnboardingCompleted: StateFlow<Boolean> = _isOnboardingCompleted.asStateFlow()
 
+    private val _isAgeConsentGiven = MutableStateFlow(false)
+    val isAgeConsentGiven: StateFlow<Boolean> = _isAgeConsentGiven.asStateFlow()
+
     init {
         viewModelScope.launch {
             _isOnboardingCompleted.value = userPreferencesRepository.isOnboardingCompleted().first()
+            _isAgeConsentGiven.value = userPreferencesRepository.isAgeConsentGiven().first()
         }
     }
 
     fun completeOnboarding() {
         viewModelScope.launch {
             userPreferencesRepository.completeOnboarding()
+        }
+    }
+
+    fun giveAgeConsent() {
+        viewModelScope.launch {
+            userPreferencesRepository.giveAgeConsent()
         }
     }
 
@@ -68,10 +79,17 @@ fun AppNavigation(
     viewModel: NavigationViewModel = hiltViewModel()
 ) {
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
+    val isAgeConsentGiven by viewModel.isAgeConsentGiven.collectAsState()
+
+    val startDestination = when {
+        !isAgeConsentGiven -> Screen.AgeConsent.route
+        !isOnboardingCompleted -> Screen.Onboarding.route
+        else -> Screen.Splash.route
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route,
+        startDestination = startDestination,
         enterTransition = {
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Left,
@@ -96,6 +114,24 @@ fun AppNavigation(
             ) + fadeOut(animationSpec = tween(300))
         }
     ) {
+        composable(
+            route = Screen.AgeConsent.route,
+            enterTransition = { fadeIn(animationSpec = tween(500)) },
+            exitTransition = { fadeOut(animationSpec = tween(500)) }
+        ) {
+            AgeConsentScreen(
+                onConsentGiven = {
+                    viewModel.giveAgeConsent()
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(Screen.AgeConsent.route) { inclusive = true }
+                    }
+                },
+                onViewDocument = { document ->
+                    navController.navigate("legal/$document")
+                },
+            )
+        }
+
         composable(
             route = Screen.Splash.route,
             enterTransition = { fadeIn(animationSpec = tween(500)) },
@@ -168,6 +204,22 @@ fun AppNavigation(
             TrainingScreen(
                 presetId = presetId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "legal/{document}",
+            arguments = listOf(navArgument("document") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val documentName = backStackEntry.arguments?.getString("document") ?: "privacy"
+            com.pelvictrainer.app.legal.LegalDocumentScreen(
+                document = when (documentName) {
+                    "privacy" -> com.pelvictrainer.app.legal.LegalDocument.PRIVACY
+                    "terms" -> com.pelvictrainer.app.legal.LegalDocument.TERMS
+                    "disclaimer" -> com.pelvictrainer.app.legal.LegalDocument.DISCLAIMER
+                    else -> com.pelvictrainer.app.legal.LegalDocument.PRIVACY
+                },
+                onNavigateBack = { navController.popBackStack() },
             )
         }
     }

@@ -38,10 +38,25 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun register(email: String, password: String, name: String): Result<Unit> =
+    override suspend fun register(
+        email: String,
+        password: String,
+        name: String,
+        consentPrivacy: Boolean,
+        consentHealth: Boolean,
+    ): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val response = api.register(RegisterRequest(email, password, name))
+                val response = api.register(
+                    RegisterRequest(
+                        email = email,
+                        password = password,
+                        name = name,
+                        consentPrivacy = consentPrivacy,
+                        consentHealth = consentHealth,
+                        consentAge = true,
+                    )
+                )
                 tokenStorage.accessToken = response.accessToken
                 tokenStorage.refreshToken = response.refreshToken
                 tokenStorage.userEmail = response.user.email

@@ -11,8 +11,14 @@ import retrofit2.http.POST
 data class LoginRequest(val email: String, val password: String)
 
 @Serializable
-data class RegisterRequest(val email: String, val password: String, val name: String)
-
+data class RegisterRequest(
+    val email: String,
+    val password: String,
+    val name: String,
+    @SerialName("consent_privacy") val consentPrivacy: Boolean = true,
+    @SerialName("consent_health") val consentHealth: Boolean = true,
+    @SerialName("consent_age") val consentAge: Boolean = true,
+)
 @Serializable
 data class UserDto(val id: Int, val email: String, val name: String)
 

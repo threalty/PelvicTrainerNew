@@ -24,10 +24,14 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 
     override fun isOnboardingCompleted(): Flow<Boolean> = dataStore.isOnboardingCompleted()
 
+    override fun isAgeConsentGiven(): Flow<Boolean> = dataStore.isAgeConsentGiven()
+
     override suspend fun updateTrainingLevel(level: TrainingLevel) =
         dataStore.updateTrainingLevel(level)
 
     override suspend fun completeOnboarding() = dataStore.completeOnboarding()
+
+    override suspend fun giveAgeConsent() = dataStore.giveAgeConsent()
 
     override suspend fun updateThemeMode(mode: ThemeMode) = dataStore.updateThemeMode(mode)
 

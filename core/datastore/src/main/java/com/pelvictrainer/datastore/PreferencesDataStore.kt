@@ -28,6 +28,7 @@ class PreferencesDataStore @Inject constructor(
 ) {
 
     private val onboardingCompletedKey = booleanPreferencesKey("onboarding_completed")
+    private val ageConsentGivenKey = booleanPreferencesKey("age_consent_given")
     private val trainingLevelKey = stringPreferencesKey("training_level")
     private val userAgeKey = intPreferencesKey("user_age")
     private val themeModeKey = stringPreferencesKey("theme_mode")
@@ -54,6 +55,7 @@ class PreferencesDataStore @Inject constructor(
 
             UserPreferences(
                 isOnboardingCompleted = prefs[onboardingCompletedKey] ?: false,
+                isAgeConsentGiven = prefs[ageConsentGivenKey] ?: false,
                 trainingLevel = prefs[trainingLevelKey]?.let {
                     try { TrainingLevel.valueOf(it) } catch (e: Exception) { TrainingLevel.BEGINNER }
                 } ?: TrainingLevel.BEGINNER,
@@ -93,12 +95,22 @@ class PreferencesDataStore @Inject constructor(
         }
     }
 
+    fun isAgeConsentGiven(): Flow<Boolean> {
+        return context.dataStore.data.map { prefs ->
+            prefs[ageConsentGivenKey] ?: false
+        }
+    }
+
     suspend fun updateTrainingLevel(level: TrainingLevel) {
         context.dataStore.edit { prefs -> prefs[trainingLevelKey] = level.name }
     }
 
     suspend fun completeOnboarding() {
         context.dataStore.edit { prefs -> prefs[onboardingCompletedKey] = true }
+    }
+
+    suspend fun giveAgeConsent() {
+        context.dataStore.edit { prefs -> prefs[ageConsentGivenKey] = true }
     }
 
     suspend fun updateThemeMode(mode: ThemeMode) {

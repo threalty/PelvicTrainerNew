@@ -20,6 +20,8 @@ data class AuthUiState(
     val email: String = "",
     val password: String = "",
     val name: String = "",
+    val consentPrivacy: Boolean = false,
+    val consentHealth: Boolean = false,
 )
 
 @HiltViewModel
@@ -45,6 +47,12 @@ class AuthViewModel @Inject constructor(
 
     fun onNameChange(name: String) =
         _state.update { it.copy(name = name, error = null) }
+
+    fun onConsentPrivacyChange(value: Boolean) =
+        _state.update { it.copy(consentPrivacy = value) }
+
+    fun onConsentHealthChange(value: Boolean) =
+        _state.update { it.copy(consentHealth = value) }
 
     fun login() = viewModelScope.launch {
         _state.update { it.copy(isLoading = true, error = null) }
@@ -76,6 +84,8 @@ class AuthViewModel @Inject constructor(
             email = _state.value.email.trim(),
             password = _state.value.password,
             name = _state.value.name.trim(),
+            consentPrivacy = _state.value.consentPrivacy,
+            consentHealth = _state.value.consentHealth,
         )
         result.fold(
             onSuccess = {

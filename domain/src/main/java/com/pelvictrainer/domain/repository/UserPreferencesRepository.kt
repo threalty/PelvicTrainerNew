@@ -12,8 +12,10 @@ interface UserPreferencesRepository {
     val userPreferences: Flow<UserPreferences>
     fun getTrainingLevel(): Flow<TrainingLevel?>
     fun isOnboardingCompleted(): Flow<Boolean>
+    fun isAgeConsentGiven(): Flow<Boolean>
     suspend fun updateTrainingLevel(level: TrainingLevel)
     suspend fun completeOnboarding()
+    suspend fun giveAgeConsent()
     suspend fun updateThemeMode(mode: ThemeMode)
     suspend fun updateAccentColor(color: AccentColor)
     suspend fun updateVoiceEnabled(enabled: Boolean)
