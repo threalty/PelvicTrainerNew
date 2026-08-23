@@ -54,14 +54,14 @@ dependencies {
 
     // WorkManager для SyncWorker
     implementation(libs.work.runtime)
-    implementation("androidx.hilt:hilt-work:1.2.0")
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.work.compiler)
 
     // kotlinx.serialization для DTO
     implementation(libs.kotlinx.serialization.json)
 
-    // AppMetrica для аналитики
+    // AppMetrica для аналитики — НЕ ТРОГАТЬ (ложное срабатывание IDE)
     implementation("com.yandex.android:mobmetricalib:5.3.0")
 
-    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.junit)
 }

@@ -8,6 +8,7 @@ plugins {
 
 android {
     namespace = "com.pelvictrainer.auth"
+    //noinspection GradleDependency
     compileSdk = 36
 
     defaultConfig {
@@ -54,13 +55,14 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
 
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
 
-    // AppMetrica (старый API — как в остальном проекте)
+    // AppMetrica (старый API — как в остальном проекте) — НЕ ТРОГАТЬ
+    //noinspection UseTomlInstead,PlaySdkIndexDeprecated
     implementation("com.yandex.android:mobmetricalib:5.3.0")
 }

@@ -12,7 +12,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="PelvicTrainer"
+        android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.PelvicTrainer">
 
@@ -47,6 +47,12 @@
                 android:resource="@xml/training_widget_info" />
         </receiver>
 
-        <!-- Блок androidx.startup с WorkManagerInitializer полностью удален для корректной on-demand инициализации -->
+        <!-- On-demand инициализация WorkManager: кастомный Configuration.Provider
+             в PelvicTrainerApplication, дефолтный инициализатор отключён полностью. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="remove" />
     </application>
 </manifest>

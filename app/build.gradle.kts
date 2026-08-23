@@ -51,6 +51,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    @Suppress("UnstableApiUsage")
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
@@ -88,27 +89,24 @@ dependencies {
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
 
-    // AppMetrica (аналитика без зависимости от Google)
+    // AppMetrica (аналитика без зависимости от Google) — НЕ ТРОГАТЬ,
+    // предупреждение о deprecated — ложное срабатывание IDE
     implementation("com.yandex.android:mobmetricalib:5.3.0")
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
 
     // ===== ТЕСТИРОВАНИЕ =====
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
-    testImplementation("io.mockk:mockk:1.13.12")
-    testImplementation("app.cash.turbine:turbine:1.1.0")
-    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation(libs.junit)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.arch.core.testing)
 
     // Network
     implementation(project(":core:network"))
-
     implementation(project(":feature:auth"))
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
-    implementation("androidx.hilt:hilt-work:1.2.0")
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
 }
