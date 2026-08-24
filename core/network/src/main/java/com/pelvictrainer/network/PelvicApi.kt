@@ -17,7 +17,6 @@ data class RegisterRequest(
     val email: String,
     val password: String,
     val name: String,
-    // Добавьте эти три строки:
     val consentPrivacy: Boolean,
     val consentHealth: Boolean,
     val consentAge: Boolean
@@ -117,6 +116,14 @@ data class MyPaymentsResponse(
     val count: Int,
 )
 
+// === НОВОЕ: Восстановление пароля ===
+
+@Serializable
+data class ForgotPasswordRequest(val email: String)
+
+@Serializable
+data class MessageResponse(val message: String)
+
 interface PelvicApi {
     @POST("api/v1/auth/register")
     suspend fun register(@Body body: RegisterRequest): AuthResponse
@@ -153,4 +160,9 @@ interface PelvicApi {
 
     @GET("api/v1/me/payments")
     suspend fun getMyPayments(): MyPaymentsResponse
+
+    // === НОВОЕ: Восстановление пароля ===
+
+    @POST("api/v1/auth/forgot-password")
+    suspend fun forgotPassword(@Body body: ForgotPasswordRequest): MessageResponse
 }

@@ -3,6 +3,7 @@ package com.pelvictrainer.auth.presentation.navigation
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.pelvictrainer.auth.presentation.ForgotPasswordScreen
 import com.pelvictrainer.auth.presentation.LoginScreen
 import com.pelvictrainer.auth.presentation.ProfileScreen
 import com.pelvictrainer.auth.presentation.RegisterScreen
@@ -11,6 +12,7 @@ object AuthRoutes {
     const val LOGIN = "auth/login"
     const val REGISTER = "auth/register"
     const val PROFILE = "auth/profile"
+    const val FORGOT_PASSWORD = "auth/forgot-password"  // НОВОЕ
 }
 
 fun NavController.navigateToLogin() {
@@ -36,6 +38,9 @@ fun NavGraphBuilder.authGraph(
             onNavigateToRegister = {
                 navController.navigate(AuthRoutes.REGISTER)
             },
+            onNavigateToForgotPassword = {  // НОВОЕ
+                navController.navigate(AuthRoutes.FORGOT_PASSWORD)
+            },
         )
     }
 
@@ -58,6 +63,15 @@ fun NavGraphBuilder.authGraph(
                 navController.navigate(AuthRoutes.LOGIN) {
                     popUpTo(0) { inclusive = true }
                 }
+            },
+        )
+    }
+
+    // НОВОЕ: Экран сброса пароля
+    composable(AuthRoutes.FORGOT_PASSWORD) {
+        ForgotPasswordScreen(
+            onNavigateBack = {
+                navController.popBackStack()
             },
         )
     }

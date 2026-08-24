@@ -4,6 +4,7 @@ import android.util.Log
 import com.pelvictrainer.domain.auth.AuthRepository
 import com.pelvictrainer.domain.model.TrainingSession
 import com.pelvictrainer.domain.repository.TrainingRepository
+import com.pelvictrainer.network.ForgotPasswordRequest
 import com.pelvictrainer.network.LoginRequest
 import com.pelvictrainer.network.PelvicApi
 import com.pelvictrainer.network.RegisterRequest
@@ -78,6 +79,15 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun getCurrentUserEmail(): String? = tokenStorage.userEmail
 
     override suspend fun getCurrentUserName(): String? = tokenStorage.userName
+
+    // === НОВОЕ: Восстановление пароля ===
+    override suspend fun forgotPassword(email: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                api.forgotPassword(ForgotPasswordRequest(email))
+                Unit
+            }
+        }
 
     private suspend fun syncHistoryFromServer() {
         try {

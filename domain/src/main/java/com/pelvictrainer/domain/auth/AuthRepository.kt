@@ -13,4 +13,7 @@ interface AuthRepository {
     suspend fun isLoggedIn(): Boolean
     suspend fun getCurrentUserEmail(): String?
     suspend fun getCurrentUserName(): String?
+
+    // === НОВОЕ: Восстановление пароля ===
+    suspend fun forgotPassword(email: String): Result<Unit>
 }

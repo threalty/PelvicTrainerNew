@@ -15,12 +15,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.pelvictrainer.auth.presentation.LoginScreen
-import com.pelvictrainer.auth.presentation.RegisterScreen
 import com.pelvictrainer.domain.model.TrainingLevel
 import com.pelvictrainer.domain.repository.UserPreferencesRepository
 import com.pelvictrainer.feature.TrainingScreen
-import com.pelvictrainer.network.TokenStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,17 +39,13 @@ sealed class Screen(val route: String) {
 
 @HiltViewModel
 class NavigationViewModel @Inject constructor(
-    private val userPreferencesRepository: UserPreferencesRepository,
-    private val tokenStorage: TokenStorage // ДОБАВЛЕНО
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
     private val _isOnboardingCompleted = MutableStateFlow(false)
     val isOnboardingCompleted: StateFlow<Boolean> = _isOnboardingCompleted.asStateFlow()
 
     private val _isAgeConsentGiven = MutableStateFlow(false)
     val isAgeConsentGiven: StateFlow<Boolean> = _isAgeConsentGiven.asStateFlow()
-
-    // ДОБАВЛЕНО: глобальная проверка наличия токена авторизации
-    val isLoggedIn: StateFlow<Boolean> = MutableStateFlow(tokenStorage.isLoggedIn).asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -87,13 +80,11 @@ fun AppNavigation(
 ) {
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
     val isAgeConsentGiven by viewModel.isAgeConsentGiven.collectAsState()
-    val isLoggedIn by viewModel.isLoggedIn.collectAsState() // ДОБАВЛЕНО
 
     val startDestination = when {
         !isAgeConsentGiven -> Screen.AgeConsent.route
         !isOnboardingCompleted -> Screen.Onboarding.route
-        !isLoggedIn -> "login"       // ИЗМЕНЕНО: принудительный вход вместо Splash
-        else -> Screen.Main.route
+        else -> Screen.Splash.route
     }
 
     NavHost(
@@ -175,8 +166,7 @@ fun AppNavigation(
             LevelSelectionScreen(
                 onLevelSelected = { level ->
                     viewModel.selectLevel(level)
-                    // ИЗМЕНЕНО: после выбора уровня ведём на логин, а не на Main
-                    navController.navigate("login") {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.LevelSelection.route) { inclusive = true }
                     }
                 }
@@ -189,8 +179,8 @@ fun AppNavigation(
                 onStartTraining = { presetId ->
                     navController.navigate(Screen.Training.createRoute(presetId))
                 },
-                onLoggedOut = { // ДОБАВЛЕНО: обработка выхода
-                    navController.navigate("login") {
+                onLoggedOut = {
+                    navController.navigate("auth/login") {
                         popUpTo(Screen.Main.route) { inclusive = true }
                     }
                 }
@@ -235,33 +225,6 @@ fun AppNavigation(
                     else -> com.pelvictrainer.app.legal.LegalDocument.PRIVACY
                 },
                 onNavigateBack = { navController.popBackStack() },
-            )
-        }
-
-        // ДОБАВЛЕНО: Корневые маршруты авторизации
-        composable("login") {
-            LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo("login") { inclusive = true }
-                    }
-                },
-                onNavigateToRegister = {
-                    navController.navigate("register")
-                }
-            )
-        }
-
-        composable("register") {
-            RegisterScreen(
-                onRegisterSuccess = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo("register") { inclusive = true }
-                    }
-                },
-                onNavigateToLogin = {
-                    navController.popBackStack()
-                }
             )
         }
     }

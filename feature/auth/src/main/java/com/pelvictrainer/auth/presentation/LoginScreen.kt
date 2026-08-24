@@ -32,6 +32,7 @@ import com.pelvictrainer.auth.presentation.components.AuthTextField
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit, // НОВОЕ
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -125,6 +126,18 @@ fun LoginScreen(
                     } else {
                         Text("Войти", fontWeight = FontWeight.SemiBold)
                     }
+                }
+
+                // НОВОЕ: Кнопка "Забыли пароль?"
+                TextButton(
+                    onClick = onNavigateToForgotPassword,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                ) {
+                    Text(
+                        "Забыли пароль?",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
             }
         }
