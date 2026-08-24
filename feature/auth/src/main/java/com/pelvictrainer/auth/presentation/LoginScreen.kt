@@ -13,7 +13,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -137,15 +136,6 @@ fun LoginScreen(
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
             Text("Нет аккаунта? Зарегистрироваться")
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedButton(
-            onClick = onLoginSuccess,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        ) {
-            Text("Продолжить без аккаунта")
         }
 
         Spacer(modifier = Modifier.weight(1f))

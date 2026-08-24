@@ -51,9 +51,7 @@ import androidx.navigation.navArgument
 import com.pelvictrainer.achievements.AchievementsScreen
 import com.pelvictrainer.app.legal.LegalDocument
 import com.pelvictrainer.app.legal.LegalDocumentScreen
-import com.pelvictrainer.auth.presentation.LoginScreen
 import com.pelvictrainer.auth.presentation.ProfileScreen
-import com.pelvictrainer.auth.presentation.RegisterScreen
 import com.pelvictrainer.calendar.CalendarScreen
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
 import com.pelvictrainer.domain.model.ThemeMode
@@ -82,6 +80,7 @@ private object ProfileRoute {
 fun MainScreen(
     navController: NavHostController,
     onStartTraining: (Long) -> Unit,
+    onLoggedOut: () -> Unit // ДОБАВЛЕНО
 ) {
     val mainNavController = rememberNavController()
     val prefsViewModel: MainScreenViewModel = hiltViewModel()
@@ -198,31 +197,7 @@ fun MainScreen(
                 composable(ProfileRoute.ROUTE) {
                     ProfileScreen(
                         onLoggedOut = {
-                            mainNavController.popBackStack()
-                        },
-                    )
-                }
-
-                // ===== Вход =====
-                composable("login") {
-                    LoginScreen(
-                        onLoginSuccess = {
-                            mainNavController.popBackStack()
-                        },
-                        onNavigateToRegister = {
-                            mainNavController.navigate("register")
-                        },
-                    )
-                }
-
-                // ===== Регистрация =====
-                composable("register") {
-                    RegisterScreen(
-                        onRegisterSuccess = {
-                            mainNavController.popBackStack()
-                        },
-                        onNavigateToLogin = {
-                            mainNavController.popBackStack()
+                            onLoggedOut() // ИЗМЕНЕНО: вызываем колбэк уровня приложения
                         },
                     )
                 }
@@ -236,7 +211,7 @@ fun MainScreen(
                     )
                 }
 
-                // ===== Юридические документы (НОВОЕ) =====
+                // ===== Юридические документы =====
                 composable(
                     route = "legal/{document}",
                     arguments = listOf(navArgument("document") { type = NavType.StringType })

@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pelvictrainer.auth.presentation.SplashScreen
+import com.pelvictrainer.auth.presentation.navigation.AuthRoutes
 import com.pelvictrainer.auth.presentation.navigation.authGraph
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,7 +36,7 @@ class MainActivity : ComponentActivity() {
                         navController = rootNavController,
                         startDestination = "splash",
                     ) {
-                        // 1. Сплэш — проверка авторизации
+                        // 1. Сплэш — проверка авторизации (уже перенаправляет на логин, если не авторизован)
                         composable("splash") {
                             SplashScreen(navController = rootNavController)
                         }
@@ -43,14 +44,19 @@ class MainActivity : ComponentActivity() {
                         // 2. Граф авторизации (login / register / profile)
                         authGraph(navController = rootNavController)
 
-                        // 3. Главный экран с BottomNav (все ваши существующие табы)
+                        // 3. Главный экран с BottomNav
                         composable("main") {
                             MainScreen(
                                 navController = rootNavController,
                                 onStartTraining = { presetId ->
-                                    // TODO Sprint 8: навигация на экран тренировки
-                                    // Сейчас просто игнорируем — ваше приложение продолжит работать как раньше
+                                    rootNavController.navigate("training/$presetId")
                                 },
+                                // ДОБАВЛЕНО: корректный выход из аккаунта с очисткой стека
+                                onLoggedOut = {
+                                    rootNavController.navigate(AuthRoutes.LOGIN) {
+                                        popUpTo("main") { inclusive = true }
+                                    }
+                                }
                             )
                         }
                     }

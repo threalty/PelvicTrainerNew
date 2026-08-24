@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml:2:13-83
-INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml:2:13-83
+ADDED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml:2:13-83
+INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml:2:13-83
 	package
-		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml
+		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml
 	xmlns:android
-		ADDED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml:2:23-81
+		ADDED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml:2:23-81
 uses-sdk
-INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml reason: use-sdk injection requested
-INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml
-INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml
+INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml reason: use-sdk injection requested
+INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml
+INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml
 	android:targetSdkVersion
-		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml
+		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml
 	android:minSdkVersion
-		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest13150526582021203582.xml
+		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7891956913795595527.xml
