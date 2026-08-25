@@ -80,7 +80,7 @@ private object ProfileRoute {
 fun MainScreen(
     navController: NavHostController,
     onStartTraining: (Long) -> Unit,
-    onLoggedOut: () -> Unit // ДОБАВЛЕНО
+    onLoggedOut: () -> Unit
 ) {
     val mainNavController = rememberNavController()
     val prefsViewModel: MainScreenViewModel = hiltViewModel()
@@ -193,16 +193,20 @@ fun MainScreen(
                     )
                 }
 
-                // ===== Профиль =====
                 composable(ProfileRoute.ROUTE) {
                     ProfileScreen(
                         onLoggedOut = {
-                            onLoggedOut() // ИЗМЕНЕНО: вызываем колбэк уровня приложения
+                            onLoggedOut()
+                        },
+                        onNavigateToSetup2FA = {
+                            mainNavController.navigate("setup_2fa")
+                        },
+                        onNavigateToBackupCodes = {
+                            mainNavController.navigate("backup_codes")
                         },
                     )
                 }
 
-                // ===== Premium экран =====
                 composable("premium") {
                     PremiumScreen(
                         onNavigateBack = {
@@ -211,7 +215,6 @@ fun MainScreen(
                     )
                 }
 
-                // ===== Юридические документы =====
                 composable(
                     route = "legal/{document}",
                     arguments = listOf(navArgument("document") { type = NavType.StringType })

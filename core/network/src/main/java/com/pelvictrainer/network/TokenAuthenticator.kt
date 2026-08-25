@@ -63,7 +63,7 @@ class TokenAuthenticator @Inject constructor(
     }
 
     private companion object {
-        const val BASE_URL = "https://api.pelvictrainer.ru/"
+        const val BASE_URL = "https://pelvictrainer.ru/"
         const val HEADER_RETRY = "X-Retry-Auth"
     }
 }

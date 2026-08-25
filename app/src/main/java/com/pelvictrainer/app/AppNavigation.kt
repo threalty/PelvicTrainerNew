@@ -184,7 +184,7 @@ fun AppNavigation(
                         popUpTo(Screen.Main.route) { inclusive = true }
                     }
                 }
-            )
+           )
         }
 
         composable(

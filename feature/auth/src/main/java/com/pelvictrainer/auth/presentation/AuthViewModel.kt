@@ -3,6 +3,7 @@ package com.pelvictrainer.auth.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.auth.AuthRepository
+import com.pelvictrainer.domain.auth.LoginResult
 import com.yandex.metrica.YandexMetrica
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,11 @@ data class AuthUiState(
     val name: String = "",
     val consentPrivacy: Boolean = false,
     val consentHealth: Boolean = false,
+    // === 2FA состояние ===
+    val requires2FAUserId: Int? = null,
+    val requires2FAEmail: String? = null,
+    val twoFACode: String = "",
+    val useBackupCode: Boolean = false,
 )
 
 @HiltViewModel
@@ -54,14 +60,31 @@ class AuthViewModel @Inject constructor(
     fun onConsentHealthChange(value: Boolean) =
         _state.update { it.copy(consentHealth = value) }
 
+    fun onTwoFACodeChange(code: String) =
+        _state.update { it.copy(twoFACode = code, error = null) }
+
+    fun toggleBackupCodeMode() =
+        _state.update { it.copy(useBackupCode = !it.useBackupCode, twoFACode = "", error = null) }
+
+    fun reset2FAState() =
+        _state.update {
+            it.copy(
+                requires2FAUserId = null,
+                requires2FAEmail = null,
+                twoFACode = "",
+                useBackupCode = false,
+                error = null,
+            )
+        }
+
     fun login() = viewModelScope.launch {
         _state.update { it.copy(isLoading = true, error = null) }
         val result = authRepository.login(
             email = _state.value.email.trim(),
             password = _state.value.password,
         )
-        result.fold(
-            onSuccess = {
+        when (result) {
+            is LoginResult.Success -> {
                 runCatching { YandexMetrica.reportEvent("login_success") }
                 _state.update {
                     it.copy(
@@ -70,12 +93,67 @@ class AuthViewModel @Inject constructor(
                         isLoggedIn = true,
                     )
                 }
-            },
-            onFailure = { throwable ->
+            }
+            is LoginResult.Requires2FA -> {
+                runCatching { YandexMetrica.reportEvent("login_requires_2fa") }
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        requires2FAUserId = result.userId,
+                        requires2FAEmail = result.email,
+                        error = null,
+                    )
+                }
+            }
+            is LoginResult.Error -> {
                 runCatching { YandexMetrica.reportEvent("login_failed") }
-                _state.update { it.copy(isLoading = false, error = parseError(throwable)) }
-            },
-        )
+                _state.update { it.copy(isLoading = false, error = result.message) }
+            }
+        }
+    }
+
+    fun verify2FACode() = viewModelScope.launch {
+        val userId = _state.value.requires2FAUserId ?: return@launch
+        val code = _state.value.twoFACode.trim()
+
+        _state.update { it.copy(isLoading = true, error = null) }
+        val result = authRepository.verify2FA(userId, code)
+        handleVerifyResult(result, "2fa_verify_success", "2fa_verify_failed")
+    }
+
+    fun verifyBackupCode() = viewModelScope.launch {
+        val userId = _state.value.requires2FAUserId ?: return@launch
+        val code = _state.value.twoFACode.trim()
+
+        _state.update { it.copy(isLoading = true, error = null) }
+        val result = authRepository.verify2FABackup(userId, code)
+        handleVerifyResult(result, "2fa_backup_success", "2fa_backup_failed")
+    }
+
+    private fun handleVerifyResult(result: LoginResult, successEvent: String, failEvent: String) {
+        when (result) {
+            is LoginResult.Success -> {
+                runCatching { YandexMetrica.reportEvent(successEvent) }
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        isLoginSuccess = true,
+                        isLoggedIn = true,
+                        requires2FAUserId = null,
+                        requires2FAEmail = null,
+                        twoFACode = "",
+                    )
+                }
+            }
+            is LoginResult.Requires2FA -> {
+                // Не должно произойти при verify
+                _state.update { it.copy(isLoading = false, error = "Неожиданная ошибка") }
+            }
+            is LoginResult.Error -> {
+                runCatching { YandexMetrica.reportEvent(failEvent) }
+                _state.update { it.copy(isLoading = false, error = result.message) }
+            }
+        }
     }
 
     fun register() = viewModelScope.launch {

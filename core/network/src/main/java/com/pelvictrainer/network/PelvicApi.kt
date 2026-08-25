@@ -3,10 +3,20 @@
 package com.pelvictrainer.network
 
 import com.pelvictrainer.network.dto.MySessionsResponseDto
+import com.pelvictrainer.network.dto.TwoFADisableRequest
+import com.pelvictrainer.network.dto.TwoFASetupCompleteResponse
+import com.pelvictrainer.network.dto.TwoFASetupResponse
+import com.pelvictrainer.network.dto.TwoFAStatusResponse
+import com.pelvictrainer.network.dto.TwoFAVerifyBackupResponse
+import com.pelvictrainer.network.dto.TwoFAVerifyLoginResponse
+import com.pelvictrainer.network.dto.VerifyBackupRequest
+import com.pelvictrainer.network.dto.VerifyLoginRequest
+import com.pelvictrainer.network.dto.VerifySetupRequest
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 @Serializable
@@ -27,9 +37,13 @@ data class UserDto(val id: Int, val email: String, val name: String)
 
 @Serializable
 data class AuthResponse(
-    @SerialName("access_token") val accessToken: String,
-    @SerialName("refresh_token") val refreshToken: String,
-    val user: UserDto,
+    @SerialName("access_token") val accessToken: String? = null,
+    @SerialName("refresh_token") val refreshToken: String? = null,
+    val user: UserDto? = null,
+    // НОВОЕ: 2FA поля
+    @SerialName("requires_2fa") val requires2fa: Boolean = false,
+    @SerialName("user_id") val userId: Int? = null,
+    val message: String? = null,
 )
 
 @Serializable
@@ -116,8 +130,6 @@ data class MyPaymentsResponse(
     val count: Int,
 )
 
-// === НОВОЕ: Восстановление пароля ===
-
 @Serializable
 data class ForgotPasswordRequest(val email: String)
 
@@ -161,8 +173,31 @@ interface PelvicApi {
     @GET("api/v1/me/payments")
     suspend fun getMyPayments(): MyPaymentsResponse
 
-    // === НОВОЕ: Восстановление пароля ===
-
     @POST("api/v1/auth/forgot-password")
     suspend fun forgotPassword(@Body body: ForgotPasswordRequest): MessageResponse
+
+    // === 2FA: Публичные эндпоинты (для проверки кода при логине) ===
+
+    @POST("api/v1/2fa/verify-login")
+    suspend fun verify2FALogin(@Body body: VerifyLoginRequest): TwoFAVerifyLoginResponse
+
+    @POST("api/v1/2fa/verify-backup")
+    suspend fun verify2FABackup(@Body body: VerifyBackupRequest): TwoFAVerifyBackupResponse
+
+    // === 2FA: Защищённые эндпоинты (требуют Bearer token) ===
+
+    @GET("api/v1/2fa/status")
+    suspend fun get2FAStatus(): TwoFAStatusResponse
+
+    @POST("api/v1/2fa/setup")
+    suspend fun setup2FA(): TwoFASetupResponse
+
+    @POST("api/v1/2fa/verify-setup")
+    suspend fun verifySetup2FA(@Body body: VerifySetupRequest): TwoFASetupCompleteResponse
+
+    @POST("api/v1/2fa/disable")
+    suspend fun disable2FA(@Body body: TwoFADisableRequest): MessageResponse
+
+    @POST("api/v1/2fa/regenerate-backup")
+    suspend fun regenerateBackupCodes(@Body body: TwoFADisableRequest): TwoFASetupCompleteResponse
 }

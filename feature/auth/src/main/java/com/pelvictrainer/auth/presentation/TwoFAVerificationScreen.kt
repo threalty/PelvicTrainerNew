@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,16 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pelvictrainer.auth.presentation.components.AuthTextField
+import androidx.compose.ui.unit.sp
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit,
-    onNavigateToTwoFA: () -> Unit,
+fun TwoFAVerificationScreen(
+    onVerifySuccess: () -> Unit,
+    onNavigateBack: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -41,14 +41,14 @@ fun LoginScreen(
     LaunchedEffect(state.isLoginSuccess) {
         if (state.isLoginSuccess) {
             viewModel.consumeSuccess()
-            onLoginSuccess()
+            onVerifySuccess()
         }
     }
 
-    // Если требуется 2FA - переходим на экран ввода кода
+    // Если 2FA больше не требуется (пользователь вышел) - возвращаемся
     LaunchedEffect(state.requires2FAUserId) {
-        if (state.requires2FAUserId != null) {
-            onNavigateToTwoFA()
+        if (state.requires2FAUserId == null) {
+            onNavigateBack()
         }
     }
 
@@ -61,7 +61,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         Text(
-            text = "💪",
+            text = "🔐",
             fontSize = 64.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
@@ -69,14 +69,18 @@ fun LoginScreen(
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "Вход в PelvicTrainer",
-            style = MaterialTheme.typography.headlineMedium,
+            text = "Двухфакторная аутентификация",
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
 
         Text(
-            text = "Синхронизация тренировок между устройствами",
+            text = if (state.useBackupCode) {
+                "Введите один из сохранённых backup-кодов"
+            } else {
+                "Введите 6-значный код из\nGoogle Authenticator или Яндекс.Ключ"
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
@@ -95,19 +99,22 @@ fun LoginScreen(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                AuthTextField(
-                    value = state.email,
-                    onValueChange = viewModel::onEmailChange,
-                    label = "Email",
-                    keyboardType = KeyboardType.Email,
-                )
-
-                AuthTextField(
-                    value = state.password,
-                    onValueChange = viewModel::onPasswordChange,
-                    label = "Пароль",
-                    isPassword = true,
-                )
+                if (state.useBackupCode) {
+                    // Backup-код: 8 символов XXXX-XXXX
+                    AuthTextField(
+                        value = state.twoFACode,
+                        onValueChange = viewModel::onTwoFACodeChange,
+                        label = "Backup-код (например ABCD-EFGH)",
+                    )
+                } else {
+                    // 6-значный код
+                    AuthTextField(
+                        value = state.twoFACode,
+                        onValueChange = viewModel::onTwoFACodeChange,
+                        label = "6-значный код",
+                        keyboardType = KeyboardType.Number,
+                    )
+                }
 
                 state.error?.let {
                     Text(
@@ -118,8 +125,14 @@ fun LoginScreen(
                 }
 
                 Button(
-                    onClick = viewModel::login,
-                    enabled = !state.isLoading && state.email.isNotBlank() && state.password.isNotBlank(),
+                    onClick = {
+                        if (state.useBackupCode) {
+                            viewModel.verifyBackupCode()
+                        } else {
+                            viewModel.verify2FACode()
+                        }
+                    },
+                    enabled = !state.isLoading && state.twoFACode.isNotBlank(),
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -132,16 +145,17 @@ fun LoginScreen(
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     } else {
-                        Text("Войти", fontWeight = FontWeight.SemiBold)
+                        Text("Подтвердить", fontWeight = FontWeight.SemiBold)
                     }
                 }
 
                 TextButton(
-                    onClick = onNavigateToForgotPassword,
+                    onClick = viewModel::toggleBackupCodeMode,
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                 ) {
                     Text(
-                        "Забыли пароль?",
+                        if (state.useBackupCode) "Использовать код из приложения"
+                        else "Использовать backup-код",
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
                     )
@@ -152,10 +166,13 @@ fun LoginScreen(
         Spacer(Modifier.height(16.dp))
 
         TextButton(
-            onClick = onNavigateToRegister,
+            onClick = {
+                viewModel.reset2FAState()
+                onNavigateBack()
+            },
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
-            Text("Нет аккаунта? Зарегистрироваться")
+            Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         Spacer(modifier = Modifier.weight(1f))
