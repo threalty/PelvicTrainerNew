@@ -1,5 +1,6 @@
 package com.pelvictrainer.auth.presentation
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.auth.AuthRepository
@@ -23,7 +24,7 @@ data class AuthUiState(
     val name: String = "",
     val consentPrivacy: Boolean = false,
     val consentHealth: Boolean = false,
-    // === 2FA состояние ===
+    // === 2FA ===
     val requires2FAUserId: Int? = null,
     val requires2FAEmail: String? = null,
     val twoFACode: String = "",
@@ -34,6 +35,10 @@ data class AuthUiState(
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "AuthViewModel"
+    }
 
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
@@ -78,13 +83,19 @@ class AuthViewModel @Inject constructor(
         }
 
     fun login() = viewModelScope.launch {
+        Log.d(TAG, "🔐 Login clicked for ${_state.value.email}")
         _state.update { it.copy(isLoading = true, error = null) }
+
         val result = authRepository.login(
             email = _state.value.email.trim(),
             password = _state.value.password,
         )
+
+        Log.d(TAG, "📥 Login result: $result")
+
         when (result) {
             is LoginResult.Success -> {
+                Log.d(TAG, "✅ Login success")
                 runCatching { YandexMetrica.reportEvent("login_success") }
                 _state.update {
                     it.copy(
@@ -95,6 +106,7 @@ class AuthViewModel @Inject constructor(
                 }
             }
             is LoginResult.Requires2FA -> {
+                Log.d(TAG, "🔐 2FA required: userId=${result.userId}")
                 runCatching { YandexMetrica.reportEvent("login_requires_2fa") }
                 _state.update {
                     it.copy(
@@ -106,6 +118,7 @@ class AuthViewModel @Inject constructor(
                 }
             }
             is LoginResult.Error -> {
+                Log.e(TAG, "❌ Login error: ${result.message}")
                 runCatching { YandexMetrica.reportEvent("login_failed") }
                 _state.update { it.copy(isLoading = false, error = result.message) }
             }
@@ -146,7 +159,6 @@ class AuthViewModel @Inject constructor(
                 }
             }
             is LoginResult.Requires2FA -> {
-                // Не должно произойти при verify
                 _state.update { it.copy(isLoading = false, error = "Неожиданная ошибка") }
             }
             is LoginResult.Error -> {
@@ -200,15 +212,11 @@ class AuthViewModel @Inject constructor(
     private fun parseError(t: Throwable): String {
         val message = t.message ?: return "Ошибка. Попробуйте ещё раз"
         return when {
-            message.contains("409", ignoreCase = true) ->
-                "Пользователь с таким email уже существует"
-            message.contains("401", ignoreCase = true) ->
-                "Неверный email или пароль"
+            message.contains("409", ignoreCase = true) -> "Пользователь с таким email уже существует"
+            message.contains("401", ignoreCase = true) -> "Неверный email или пароль"
             message.contains("Unable to resolve host", ignoreCase = true) ||
-                    message.contains("Network", ignoreCase = true) ->
-                "Нет соединения с сервером"
-            message.contains("timeout", ignoreCase = true) ->
-                "Сервер не отвечает. Попробуйте позже"
+                    message.contains("Network", ignoreCase = true) -> "Нет соединения с сервером"
+            message.contains("timeout", ignoreCase = true) -> "Сервер не отвечает. Попробуйте позже"
             else -> "Ошибка. Попробуйте ещё раз"
         }
     }

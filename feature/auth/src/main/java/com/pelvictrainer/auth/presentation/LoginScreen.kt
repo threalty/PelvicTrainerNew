@@ -45,7 +45,6 @@ fun LoginScreen(
         }
     }
 
-    // Если требуется 2FA - переходим на экран ввода кода
     LaunchedEffect(state.requires2FAUserId) {
         if (state.requires2FAUserId != null) {
             onNavigateToTwoFA()

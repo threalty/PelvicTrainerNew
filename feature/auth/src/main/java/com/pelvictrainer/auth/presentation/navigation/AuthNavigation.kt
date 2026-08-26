@@ -2,9 +2,7 @@ package com.pelvictrainer.auth.presentation.navigation
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavType
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
 import com.pelvictrainer.auth.presentation.BackupCodesScreen
 import com.pelvictrainer.auth.presentation.ForgotPasswordScreen
 import com.pelvictrainer.auth.presentation.LoginScreen

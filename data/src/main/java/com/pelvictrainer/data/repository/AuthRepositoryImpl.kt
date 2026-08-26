@@ -38,24 +38,28 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun login(email: String, password: String): LoginResult =
         withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "🔐 Login attempt for: $email")
                 val response = api.login(LoginRequest(email, password))
+                Log.d(TAG, "📥 Login response: requires2fa=${response.requires2fa}, userId=${response.userId}, hasAccessToken=${response.accessToken != null}")
 
-                // Если требуется 2FA - возвращаем special result
+                // === Если требуется 2FA ===
                 val userId = response.userId
                 if (response.requires2fa && userId != null) {
+                    Log.d(TAG, "🔐 2FA required for userId=$userId")
                     return@withContext LoginResult.Requires2FA(
                         userId = userId,
                         email = email,
                     )
                 }
 
-                // Обычный логин - сохраняем токены
+                // === Обычный логин ===
                 val accessToken = response.accessToken
                 val refreshToken = response.refreshToken
                 val user = response.user
 
                 if (accessToken == null || refreshToken == null || user == null) {
-                    return@withContext LoginResult.Error("Не удалось получить токены")
+                    Log.e(TAG, "❌ Missing tokens or user in response")
+                    return@withContext LoginResult.Error("Не удалось получить данные авторизации")
                 }
 
                 tokenStorage.accessToken = accessToken
@@ -64,9 +68,10 @@ class AuthRepositoryImpl @Inject constructor(
                 tokenStorage.userName = user.name
                 syncHistoryFromServer()
 
+                Log.d(TAG, "✅ Login successful for ${user.email}")
                 LoginResult.Success
             } catch (e: Exception) {
-                Log.e(TAG, "Login failed", e)
+                Log.e(TAG, "❌ Login failed with exception", e)
                 LoginResult.Error(parseErrorMessage(e))
             }
         }
@@ -90,7 +95,6 @@ class AuthRepositoryImpl @Inject constructor(
                         consentAge = true,
                     )
                 )
-                // При регистрации 2FA никогда не требуется
                 val accessToken = response.accessToken
                 val refreshToken = response.refreshToken
                 val user = response.user
@@ -127,11 +131,11 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
 
-    // === 2FA: подтверждение при логине ===
-
+    // === 2FA ===
     override suspend fun verify2FA(userId: Int, code: String): LoginResult =
         withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "🔐 2FA verify for userId=$userId")
                 val response: TwoFAVerifyLoginResponse = api.verify2FALogin(
                     VerifyLoginRequest(userId = userId, code = code)
                 )
@@ -142,9 +146,10 @@ class AuthRepositoryImpl @Inject constructor(
                 tokenStorage.userName = response.name ?: ""
                 syncHistoryFromServer()
 
+                Log.d(TAG, "✅ 2FA successful for ${response.email}")
                 LoginResult.Success
             } catch (e: Exception) {
-                Log.e(TAG, "2FA verification failed", e)
+                Log.e(TAG, "❌ 2FA verification failed", e)
                 LoginResult.Error(parseErrorMessage(e))
             }
         }
@@ -164,28 +169,21 @@ class AuthRepositoryImpl @Inject constructor(
 
                 LoginResult.Success
             } catch (e: Exception) {
-                Log.e(TAG, "Backup code verification failed", e)
+                Log.e(TAG, "❌ Backup verification failed", e)
                 LoginResult.Error(parseErrorMessage(e))
             }
         }
 
-    // === 2FA: управление ===
-
     override suspend fun get2FAStatus(): Result<Boolean> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                api.get2FAStatus().enabled
-            }
+            runCatching { api.get2FAStatus().enabled }
         }
 
     override suspend fun setup2FA(): Result<TwoFASetupData> =
         withContext(Dispatchers.IO) {
             runCatching {
                 val response = api.setup2FA()
-                TwoFASetupData(
-                    secret = response.secret,
-                    qrCodeUrl = response.qrCodeUrl,
-                )
+                TwoFASetupData(secret = response.secret, qrCodeUrl = response.qrCodeUrl)
             }
         }
 
@@ -208,8 +206,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun regenerateBackupCodes(code: String): Result<List<String>> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val response = api.regenerateBackupCodes(TwoFADisableRequest(code))
-                response.backupCodes
+                api.regenerateBackupCodes(TwoFADisableRequest(code)).backupCodes
             }
         }
 
@@ -236,7 +233,6 @@ class AuthRepositoryImpl @Inject constructor(
                         serverSessionId = sessionDto.id,
                     )
                     trainingRepository.insertFromServer(session)
-                    Log.d(TAG, "✅ Добавлена тренировка с сервера (serverId=${sessionDto.id})")
                 }
             }
         } catch (e: Exception) {
@@ -247,15 +243,11 @@ class AuthRepositoryImpl @Inject constructor(
     private fun parseErrorMessage(e: Throwable): String {
         val message = e.message ?: return "Ошибка. Попробуйте ещё раз"
         return when {
-            message.contains("409", ignoreCase = true) ->
-                "Пользователь с таким email уже существует"
-            message.contains("401", ignoreCase = true) ->
-                "Неверный email или пароль"
+            message.contains("409", ignoreCase = true) -> "Пользователь с таким email уже существует"
+            message.contains("401", ignoreCase = true) -> "Неверный email или пароль"
             message.contains("Unable to resolve host", ignoreCase = true) ||
-                    message.contains("Network", ignoreCase = true) ->
-                "Нет соединения с сервером"
-            message.contains("timeout", ignoreCase = true) ->
-                "Сервер не отвечает. Попробуйте позже"
+                    message.contains("Network", ignoreCase = true) -> "Нет соединения с сервером"
+            message.contains("timeout", ignoreCase = true) -> "Сервер не отвечает. Попробуйте позже"
             else -> message.takeIf { it.isNotBlank() } ?: "Ошибка. Попробуйте ещё раз"
         }
     }

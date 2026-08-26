@@ -16,7 +16,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.POST
 
 @Serializable
@@ -35,12 +34,13 @@ data class RegisterRequest(
 @Serializable
 data class UserDto(val id: Int, val email: String, val name: String)
 
+// === ИСПРАВЛЕНО: все поля nullable для поддержки 2FA ответа ===
 @Serializable
 data class AuthResponse(
     @SerialName("access_token") val accessToken: String? = null,
     @SerialName("refresh_token") val refreshToken: String? = null,
     val user: UserDto? = null,
-    // НОВОЕ: 2FA поля
+    // === 2FA поля ===
     @SerialName("requires_2fa") val requires2fa: Boolean = false,
     @SerialName("user_id") val userId: Int? = null,
     val message: String? = null,
@@ -176,16 +176,14 @@ interface PelvicApi {
     @POST("api/v1/auth/forgot-password")
     suspend fun forgotPassword(@Body body: ForgotPasswordRequest): MessageResponse
 
-    // === 2FA: Публичные эндпоинты (для проверки кода при логине) ===
-
+    // === 2FA: Публичные эндпоинты ===
     @POST("api/v1/2fa/verify-login")
     suspend fun verify2FALogin(@Body body: VerifyLoginRequest): TwoFAVerifyLoginResponse
 
     @POST("api/v1/2fa/verify-backup")
     suspend fun verify2FABackup(@Body body: VerifyBackupRequest): TwoFAVerifyBackupResponse
 
-    // === 2FA: Защищённые эндпоинты (требуют Bearer token) ===
-
+    // === 2FA: Защищённые эндпоинты ===
     @GET("api/v1/2fa/status")
     suspend fun get2FAStatus(): TwoFAStatusResponse
 
