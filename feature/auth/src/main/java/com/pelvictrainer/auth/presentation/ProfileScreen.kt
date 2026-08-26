@@ -31,11 +31,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.AlertDialog
 
 @Composable
 fun ProfileScreen(
@@ -48,8 +52,19 @@ fun ProfileScreen(
     val authState by authViewModel.state.collectAsState()
     val twoFAState by twoFAViewModel.state.collectAsState()
 
+    var showDisableDialog by remember { mutableStateOf(false) }
+    var showDisableSuccess by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         twoFAViewModel.load2FAStatus()
+    }
+
+    // Отслеживаем успешное отключение 2FA
+    LaunchedEffect(twoFAState.is2FAEnabled) {
+        if (twoFAState.is2FAEnabled == false && showDisableDialog) {
+            showDisableDialog = false
+            showDisableSuccess = true
+        }
     }
 
     Column(
@@ -199,6 +214,15 @@ fun ProfileScreen(
                             ) {
                                 Text("Backup-коды")
                             }
+                            TextButton(
+                                onClick = { showDisableDialog = true },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(
+                                    "Отключить",
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
                         }
                     }
                 }
@@ -243,5 +267,48 @@ fun ProfileScreen(
             Spacer(Modifier.width(8.dp))
             Text("Выйти из аккаунта")
         }
+    }
+
+    // === Диалог отключения 2FA ===
+    if (showDisableDialog) {
+        Disable2FADialog(
+            isLoading = twoFAState.isLoading,
+            error = twoFAState.error,
+            onConfirm = { code ->
+                twoFAViewModel.disable2FA(code)
+            },
+            onDismiss = {
+                showDisableDialog = false
+                twoFAViewModel.clearError()
+            },
+        )
+    }
+
+    // === Диалог успешного отключения ===
+    if (showDisableSuccess) {
+        AlertDialog(
+            onDismissRequest = { showDisableSuccess = false },
+            title = {
+                Text(
+                    text = "2FA отключена",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    text = "Двухфакторная аутентификация была успешно отключена. Теперь для входа достаточно пароля.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDisableSuccess = false
+                    twoFAViewModel.load2FAStatus()
+                }) {
+                    Text("OK")
+                }
+            },
+        )
     }
 }

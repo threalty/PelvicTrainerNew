@@ -97,9 +97,7 @@ class TwoFAViewModel @Inject constructor(
     fun onDisableCodeChange(code: String) =
         _state.update { it.copy(disableCode = code, error = null) }
 
-    fun disable2FA() = viewModelScope.launch {
-        val code = _state.value.disableCode.trim()
-
+    fun disable2FA(code: String) = viewModelScope.launch {
         _state.update { it.copy(isLoading = true, error = null) }
         authRepository.disable2FA(code).fold(
             onSuccess = {
@@ -107,8 +105,7 @@ class TwoFAViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         is2FAEnabled = false,
-                        disableCode = "",
-                        backupCodes = emptyList(),
+                        error = null,
                     )
                 }
             },
@@ -117,6 +114,8 @@ class TwoFAViewModel @Inject constructor(
             }
         )
     }
+
+    fun clearError() = _state.update { it.copy(error = null) }
 
     fun regenerateBackupCodes(code: String) = viewModelScope.launch {
         _state.update { it.copy(isLoading = true, error = null) }
@@ -135,8 +134,6 @@ class TwoFAViewModel @Inject constructor(
             }
         )
     }
-
-    fun clearError() = _state.update { it.copy(error = null) }
 
     fun resetSetup() = _state.update {
         it.copy(
