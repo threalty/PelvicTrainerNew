@@ -2,7 +2,9 @@ package com.pelvictrainer.auth.presentation.navigation
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.pelvictrainer.auth.presentation.BackupCodesScreen
 import com.pelvictrainer.auth.presentation.ForgotPasswordScreen
 import com.pelvictrainer.auth.presentation.LoginScreen
@@ -16,9 +18,12 @@ object AuthRoutes {
     const val REGISTER = "auth/register"
     const val PROFILE = "auth/profile"
     const val FORGOT_PASSWORD = "auth/forgot-password"
-    const val TWO_FA_VERIFY = "auth/2fa-verify"
+    const val TWO_FA_VERIFY = "auth/2fa-verify/{userId}/{email}"
     const val SETUP_2FA = "auth/setup-2fa"
     const val BACKUP_CODES = "auth/backup-codes"
+
+    fun twoFAVerify(userId: Int, email: String): String =
+        "auth/2fa-verify/$userId/$email"
 }
 
 fun NavController.navigateToLogin() {
@@ -29,6 +34,10 @@ fun NavController.navigateToProfile() {
     navigate(AuthRoutes.PROFILE)
 }
 
+fun NavController.navigateToTwoFAVerify(userId: Int, email: String) {
+    navigate(AuthRoutes.twoFAVerify(userId, email))
+}
+
 fun NavGraphBuilder.authGraph(navController: NavController) {
     composable(AuthRoutes.LOGIN) {
         LoginScreen(
@@ -37,7 +46,9 @@ fun NavGraphBuilder.authGraph(navController: NavController) {
             },
             onNavigateToRegister = { navController.navigate(AuthRoutes.REGISTER) },
             onNavigateToForgotPassword = { navController.navigate(AuthRoutes.FORGOT_PASSWORD) },
-            onNavigateToTwoFA = { navController.navigate(AuthRoutes.TWO_FA_VERIFY) },
+            onNavigateToTwoFA = { userId, email ->
+                navController.navigate(AuthRoutes.twoFAVerify(userId, email))
+            },
         )
     }
     composable(AuthRoutes.REGISTER) {
@@ -58,8 +69,18 @@ fun NavGraphBuilder.authGraph(navController: NavController) {
     composable(AuthRoutes.FORGOT_PASSWORD) {
         ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() })
     }
-    composable(AuthRoutes.TWO_FA_VERIFY) {
+    composable(
+        route = AuthRoutes.TWO_FA_VERIFY,
+        arguments = listOf(
+            navArgument("userId") { type = NavType.IntType },
+            navArgument("email") { type = NavType.StringType },
+        ),
+    ) { backStackEntry ->
+        val userId = backStackEntry.arguments?.getInt("userId") ?: 0
+        val email = backStackEntry.arguments?.getString("email") ?: ""
         TwoFAVerificationScreen(
+            userId = userId,
+            email = email,
             onVerifySuccess = {
                 navController.navigate("main") { popUpTo(AuthRoutes.LOGIN) { inclusive = true } }
             },

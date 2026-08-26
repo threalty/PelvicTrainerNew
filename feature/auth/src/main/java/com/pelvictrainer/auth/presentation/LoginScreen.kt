@@ -33,7 +33,7 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
-    onNavigateToTwoFA: () -> Unit,
+    onNavigateToTwoFA: (userId: Int, email: String) -> Unit,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -46,8 +46,10 @@ fun LoginScreen(
     }
 
     LaunchedEffect(state.requires2FAUserId) {
-        if (state.requires2FAUserId != null) {
-            onNavigateToTwoFA()
+        val userId = state.requires2FAUserId
+        val email = state.requires2FAEmail
+        if (userId != null && email != null) {
+            onNavigateToTwoFA(userId, email)
         }
     }
 

@@ -67,9 +67,18 @@ class AuthViewModel @Inject constructor(
         )
     }
 
+
+    fun setTwoFAContext(userId: Int, email: String) {
+        if (_state.value.requires2FAUserId == null) {
+            _state.update { it.copy(requires2FAUserId = userId, requires2FAEmail = email) }
+        }
+    }
+
     fun login() = viewModelScope.launch {
         Log.d(TAG, "🔐 Login clicked for ${_state.value.email}")
         _state.update { it.copy(isLoading = true, error = null) }
+
+
         val result = authRepository.login(
             email = _state.value.email.trim(),
             password = _state.value.password,
