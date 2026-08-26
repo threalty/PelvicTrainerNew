@@ -52,37 +52,24 @@ fun LoginScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
     ) {
         Spacer(modifier = Modifier.weight(1f))
-
-        Text(
-            text = "💪",
-            fontSize = 64.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
-
+        Text(text = "💪", fontSize = 64.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
         Spacer(Modifier.height(16.dp))
-
         Text(
             text = "Вход в PelvicTrainer",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
-
         Text(
             text = "Синхронизация тренировок между устройствами",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 8.dp),
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp),
         )
-
         Spacer(Modifier.height(32.dp))
 
         Card(
@@ -90,39 +77,27 @@ fun LoginScreen(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
             ),
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 AuthTextField(
                     value = state.email,
                     onValueChange = viewModel::onEmailChange,
                     label = "Email",
                     keyboardType = KeyboardType.Email,
                 )
-
                 AuthTextField(
                     value = state.password,
                     onValueChange = viewModel::onPasswordChange,
                     label = "Пароль",
                     isPassword = true,
                 )
-
                 state.error?.let {
-                    Text(
-                        text = "❌ $it",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                    Text(text = "❌ $it", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
-
                 Button(
                     onClick = viewModel::login,
                     enabled = !state.isLoading && state.email.isNotBlank() && state.password.isNotBlank(),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 ) {
                     if (state.isLoading) {
                         CircularProgressIndicator(
@@ -134,29 +109,21 @@ fun LoginScreen(
                         Text("Войти", fontWeight = FontWeight.SemiBold)
                     }
                 }
-
                 TextButton(
                     onClick = onNavigateToForgotPassword,
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                 ) {
-                    Text(
-                        "Забыли пароль?",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium,
-                    )
+                    Text("Забыли пароль?", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                 }
             }
         }
-
         Spacer(Modifier.height(16.dp))
-
         TextButton(
             onClick = onNavigateToRegister,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
             Text("Нет аккаунта? Зарегистрироваться")
         }
-
         Spacer(modifier = Modifier.weight(1f))
     }
 }

@@ -36,9 +36,7 @@ class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
 ) : ViewModel() {
 
-    companion object {
-        private const val TAG = "AuthViewModel"
-    }
+    companion object { private const val TAG = "AuthViewModel" }
 
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
@@ -50,63 +48,41 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun onEmailChange(email: String) =
-        _state.update { it.copy(email = email, error = null) }
-
-    fun onPasswordChange(pw: String) =
-        _state.update { it.copy(password = pw, error = null) }
-
-    fun onNameChange(name: String) =
-        _state.update { it.copy(name = name, error = null) }
-
-    fun onConsentPrivacyChange(value: Boolean) =
-        _state.update { it.copy(consentPrivacy = value) }
-
-    fun onConsentHealthChange(value: Boolean) =
-        _state.update { it.copy(consentHealth = value) }
-
-    fun onTwoFACodeChange(code: String) =
-        _state.update { it.copy(twoFACode = code, error = null) }
-
+    fun onEmailChange(email: String) = _state.update { it.copy(email = email, error = null) }
+    fun onPasswordChange(pw: String) = _state.update { it.copy(password = pw, error = null) }
+    fun onNameChange(name: String) = _state.update { it.copy(name = name, error = null) }
+    fun onConsentPrivacyChange(value: Boolean) = _state.update { it.copy(consentPrivacy = value) }
+    fun onConsentHealthChange(value: Boolean) = _state.update { it.copy(consentHealth = value) }
+    fun onTwoFACodeChange(code: String) = _state.update { it.copy(twoFACode = code, error = null) }
     fun toggleBackupCodeMode() =
         _state.update { it.copy(useBackupCode = !it.useBackupCode, twoFACode = "", error = null) }
 
-    fun reset2FAState() =
-        _state.update {
-            it.copy(
-                requires2FAUserId = null,
-                requires2FAEmail = null,
-                twoFACode = "",
-                useBackupCode = false,
-                error = null,
-            )
-        }
+    fun reset2FAState() = _state.update {
+        it.copy(
+            requires2FAUserId = null,
+            requires2FAEmail = null,
+            twoFACode = "",
+            useBackupCode = false,
+            error = null,
+        )
+    }
 
     fun login() = viewModelScope.launch {
         Log.d(TAG, "🔐 Login clicked for ${_state.value.email}")
         _state.update { it.copy(isLoading = true, error = null) }
-
         val result = authRepository.login(
             email = _state.value.email.trim(),
             password = _state.value.password,
         )
-
         Log.d(TAG, "📥 Login result: $result")
-
         when (result) {
             is LoginResult.Success -> {
-                Log.d(TAG, "✅ Login success")
                 runCatching { YandexMetrica.reportEvent("login_success") }
                 _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isLoginSuccess = true,
-                        isLoggedIn = true,
-                    )
+                    it.copy(isLoading = false, isLoginSuccess = true, isLoggedIn = true)
                 }
             }
             is LoginResult.Requires2FA -> {
-                Log.d(TAG, "🔐 2FA required: userId=${result.userId}")
                 runCatching { YandexMetrica.reportEvent("login_requires_2fa") }
                 _state.update {
                     it.copy(
@@ -118,7 +94,6 @@ class AuthViewModel @Inject constructor(
                 }
             }
             is LoginResult.Error -> {
-                Log.e(TAG, "❌ Login error: ${result.message}")
                 runCatching { YandexMetrica.reportEvent("login_failed") }
                 _state.update { it.copy(isLoading = false, error = result.message) }
             }
@@ -128,22 +103,18 @@ class AuthViewModel @Inject constructor(
     fun verify2FACode() = viewModelScope.launch {
         val userId = _state.value.requires2FAUserId ?: return@launch
         val code = _state.value.twoFACode.trim()
-
         _state.update { it.copy(isLoading = true, error = null) }
-        val result = authRepository.verify2FA(userId, code)
-        handleVerifyResult(result, "2fa_verify_success", "2fa_verify_failed")
+        handleVerifyResult(authRepository.verify2FA(userId, code), "2fa_success")
     }
 
     fun verifyBackupCode() = viewModelScope.launch {
         val userId = _state.value.requires2FAUserId ?: return@launch
         val code = _state.value.twoFACode.trim()
-
         _state.update { it.copy(isLoading = true, error = null) }
-        val result = authRepository.verify2FABackup(userId, code)
-        handleVerifyResult(result, "2fa_backup_success", "2fa_backup_failed")
+        handleVerifyResult(authRepository.verify2FABackup(userId, code), "2fa_backup_success")
     }
 
-    private fun handleVerifyResult(result: LoginResult, successEvent: String, failEvent: String) {
+    private fun handleVerifyResult(result: LoginResult, successEvent: String) {
         when (result) {
             is LoginResult.Success -> {
                 runCatching { YandexMetrica.reportEvent(successEvent) }
@@ -158,39 +129,31 @@ class AuthViewModel @Inject constructor(
                     )
                 }
             }
-            is LoginResult.Requires2FA -> {
+            is LoginResult.Requires2FA ->
                 _state.update { it.copy(isLoading = false, error = "Неожиданная ошибка") }
-            }
-            is LoginResult.Error -> {
-                runCatching { YandexMetrica.reportEvent(failEvent) }
+            is LoginResult.Error ->
                 _state.update { it.copy(isLoading = false, error = result.message) }
-            }
         }
     }
 
     fun register() = viewModelScope.launch {
         _state.update { it.copy(isLoading = true, error = null) }
-        val result = authRepository.register(
+        authRepository.register(
             email = _state.value.email.trim(),
             password = _state.value.password,
             name = _state.value.name.trim(),
             consentPrivacy = _state.value.consentPrivacy,
             consentHealth = _state.value.consentHealth,
-        )
-        result.fold(
+        ).fold(
             onSuccess = {
                 runCatching { YandexMetrica.reportEvent("register_success") }
                 _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isLoginSuccess = true,
-                        isLoggedIn = true,
-                    )
+                    it.copy(isLoading = false, isLoginSuccess = true, isLoggedIn = true)
                 }
             },
-            onFailure = { throwable ->
+            onFailure = { t ->
                 runCatching { YandexMetrica.reportEvent("register_failed") }
-                _state.update { it.copy(isLoading = false, error = parseError(throwable)) }
+                _state.update { it.copy(isLoading = false, error = parseError(t)) }
             },
         )
     }
@@ -198,25 +161,19 @@ class AuthViewModel @Inject constructor(
     fun logout() = viewModelScope.launch {
         authRepository.logout()
         _state.update {
-            AuthUiState(
-                isLoggedIn = false,
-                email = "",
-                password = "",
-                name = "",
-            )
+            AuthUiState(isLoggedIn = false, email = "", password = "", name = "")
         }
     }
 
     fun consumeSuccess() = _state.update { it.copy(isLoginSuccess = false) }
 
     private fun parseError(t: Throwable): String {
-        val message = t.message ?: return "Ошибка. Попробуйте ещё раз"
+        val m = t.message ?: return "Ошибка. Попробуйте ещё раз"
         return when {
-            message.contains("409", ignoreCase = true) -> "Пользователь с таким email уже существует"
-            message.contains("401", ignoreCase = true) -> "Неверный email или пароль"
-            message.contains("Unable to resolve host", ignoreCase = true) ||
-                    message.contains("Network", ignoreCase = true) -> "Нет соединения с сервером"
-            message.contains("timeout", ignoreCase = true) -> "Сервер не отвечает. Попробуйте позже"
+            m.contains("409") -> "Пользователь с таким email уже существует"
+            m.contains("401") -> "Неверный email или пароль"
+            m.contains("Unable to resolve host") || m.contains("Network") -> "Нет соединения"
+            m.contains("timeout") -> "Сервер не отвечает"
             else -> "Ошибка. Попробуйте ещё раз"
         }
     }

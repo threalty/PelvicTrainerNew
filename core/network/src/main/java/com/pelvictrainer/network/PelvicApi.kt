@@ -34,13 +34,12 @@ data class RegisterRequest(
 @Serializable
 data class UserDto(val id: Int, val email: String, val name: String)
 
-// === ИСПРАВЛЕНО: все поля nullable для поддержки 2FA ответа ===
+// === ВСЕ ПОЛЯ NULLABLE для поддержки 2FA ответа ===
 @Serializable
 data class AuthResponse(
     @SerialName("access_token") val accessToken: String? = null,
     @SerialName("refresh_token") val refreshToken: String? = null,
     val user: UserDto? = null,
-    // === 2FA поля ===
     @SerialName("requires_2fa") val requires2fa: Boolean = false,
     @SerialName("user_id") val userId: Int? = null,
     val message: String? = null,
@@ -125,10 +124,7 @@ data class PaymentDto(
 )
 
 @Serializable
-data class MyPaymentsResponse(
-    val payments: List<PaymentDto>,
-    val count: Int,
-)
+data class MyPaymentsResponse(val payments: List<PaymentDto>, val count: Int)
 
 @Serializable
 data class ForgotPasswordRequest(val email: String)
@@ -176,14 +172,13 @@ interface PelvicApi {
     @POST("api/v1/auth/forgot-password")
     suspend fun forgotPassword(@Body body: ForgotPasswordRequest): MessageResponse
 
-    // === 2FA: Публичные эндпоинты ===
+    // === 2FA ===
     @POST("api/v1/2fa/verify-login")
     suspend fun verify2FALogin(@Body body: VerifyLoginRequest): TwoFAVerifyLoginResponse
 
     @POST("api/v1/2fa/verify-backup")
     suspend fun verify2FABackup(@Body body: VerifyBackupRequest): TwoFAVerifyBackupResponse
 
-    // === 2FA: Защищённые эндпоинты ===
     @GET("api/v1/2fa/status")
     suspend fun get2FAStatus(): TwoFAStatusResponse
 

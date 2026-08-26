@@ -3,13 +3,8 @@ package com.pelvictrainer.network.dto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// === Requests ===
-
 @Serializable
-data class VerifySetupRequest(
-    val secret: String,
-    val code: String,
-)
+data class VerifySetupRequest(val secret: String, val code: String)
 
 @Serializable
 data class VerifyLoginRequest(
@@ -24,16 +19,10 @@ data class VerifyBackupRequest(
 )
 
 @Serializable
-data class TwoFADisableRequest(
-    val code: String,
-)
-
-// === Responses ===
+data class TwoFADisableRequest(val code: String)
 
 @Serializable
-data class TwoFAStatusResponse(
-    val enabled: Boolean,
-)
+data class TwoFAStatusResponse(val enabled: Boolean)
 
 @Serializable
 data class TwoFASetupResponse(
