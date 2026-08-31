@@ -12,10 +12,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
 data class WorkoutsUiState(
@@ -26,7 +31,8 @@ data class WorkoutsUiState(
     val trainingsNeededForNextLevel: Int = 0,
     val trainingsDoneOnCurrentLevel: Int = 0,
     val nextLevel: TrainingLevel? = null,
-    val progressToNextLevel: Float = 0f
+    val progressToNextLevel: Float = 0f,
+    val canTrainToday: Boolean = true
 )
 
 @HiltViewModel
@@ -47,22 +53,55 @@ class WorkoutsViewModel @Inject constructor(
     private val _levelUpEvent = MutableStateFlow<TrainingLevel?>(null)
     val levelUpEvent: StateFlow<TrainingLevel?> = _levelUpEvent.asStateFlow()
 
-    // ===== Premium состояние (реактивные) =====
+    // ===== Premium состояние (реактивное) =====
     val isPremium = subscriptionRepository.subscriptionState.map { it.isPremiumActive }
 
-    // ИСПРАВЛЕНО: теперь реактивный — обновляется при изменении подписки
-    val availablePresetIds: StateFlow<List<Long>> = subscriptionRepository.subscriptionState
-        .map { state ->
-            if (state.isPremiumActive) listOf(1L, 2L, 3L) else listOf(1L)
+    // ИСПРАВЛЕНО: фильтрация по уровню пресета
+    val availablePresetIds: StateFlow<List<Long>> = combine(
+        subscriptionRepository.subscriptionState,
+        trainingRepository.getPresets()
+    ) { subscriptionState, presets ->
+        if (subscriptionState.isPremiumActive) {
+            // Премиум: все пресеты доступны
+            presets.map { it.id }
+        } else {
+            // Бесплатный: только пресеты уровня BEGINNER
+            presets.filter { it.level == TrainingLevel.BEGINNER }.map { it.id }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = listOf(1L)
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
 
     init {
         loadWorkouts()
+        checkDailyLimit()
+    }
+
+    private fun checkDailyLimit() {
+        viewModelScope.launch {
+            subscriptionRepository.subscriptionState.collect { subscriptionState ->
+                if (!subscriptionState.isPremiumActive) {
+                    // Проверяем последнюю тренировку
+                    val sessions = trainingRepository.getSessions().first()
+                    val today = LocalDate.now(ZoneId.systemDefault())
+
+                    val hasTrainedToday = sessions.any { session ->
+                        // session.date это Long (timestamp в миллисекундах)
+                        val sessionDate = Instant.ofEpochMilli(session.date)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        sessionDate == today
+                    }
+
+                    _uiState.update { it.copy(canTrainToday = !hasTrainedToday) }
+                } else {
+                    // Премиум: всегда может тренироваться
+                    _uiState.update { it.copy(canTrainToday = true) }
+                }
+            }
+        }
     }
 
     private fun loadWorkouts() {
@@ -83,25 +122,36 @@ class WorkoutsViewModel @Inject constructor(
 
             val effectiveLevel = if (targetLevel.ordinal > currentLevel.ordinal) targetLevel else currentLevel
 
-            _uiState.value = buildUiState(
-                presets = presets,
-                level = effectiveLevel,
-                totalTrainings = totalTrainings
-            )
+            _uiState.update { currentState ->
+                currentState.copy(
+                    presets = presets,
+                    userLevel = effectiveLevel,
+                    isLoading = false,
+                    totalCompletedTrainings = totalTrainings,
+                    trainingsNeededForNextLevel = when (effectiveLevel) {
+                        TrainingLevel.BEGINNER -> INTERMEDIATE_THRESHOLD
+                        TrainingLevel.INTERMEDIATE -> ADVANCED_THRESHOLD
+                        TrainingLevel.ADVANCED -> totalTrainings
+                    },
+                    trainingsDoneOnCurrentLevel = totalTrainings.coerceAtMost(
+                        when (effectiveLevel) {
+                            TrainingLevel.BEGINNER -> INTERMEDIATE_THRESHOLD
+                            TrainingLevel.INTERMEDIATE -> ADVANCED_THRESHOLD
+                            TrainingLevel.ADVANCED -> totalTrainings
+                        }
+                    ),
+                    nextLevel = when (effectiveLevel) {
+                        TrainingLevel.BEGINNER -> TrainingLevel.INTERMEDIATE
+                        TrainingLevel.INTERMEDIATE -> TrainingLevel.ADVANCED
+                        TrainingLevel.ADVANCED -> null
+                    },
+                    progressToNextLevel = calculateProgress(totalTrainings, effectiveLevel)
+                )
+            }
         }
     }
 
-    private fun buildUiState(
-        presets: List<TrainingPreset>,
-        level: TrainingLevel,
-        totalTrainings: Int
-    ): WorkoutsUiState {
-        val nextLevel = when (level) {
-            TrainingLevel.BEGINNER -> TrainingLevel.INTERMEDIATE
-            TrainingLevel.INTERMEDIATE -> TrainingLevel.ADVANCED
-            TrainingLevel.ADVANCED -> null
-        }
-
+    private fun calculateProgress(totalTrainings: Int, level: TrainingLevel): Float {
         val thresholdForNext = when (level) {
             TrainingLevel.BEGINNER -> INTERMEDIATE_THRESHOLD
             TrainingLevel.INTERMEDIATE -> ADVANCED_THRESHOLD
@@ -109,22 +159,11 @@ class WorkoutsViewModel @Inject constructor(
         }
 
         val doneOnLevel = totalTrainings.coerceAtMost(thresholdForNext)
-        val progress = if (thresholdForNext > 0) {
+        return if (thresholdForNext > 0) {
             (doneOnLevel.toFloat() / thresholdForNext).coerceIn(0f, 1f)
         } else {
             1f
         }
-
-        return WorkoutsUiState(
-            presets = presets,
-            userLevel = level,
-            isLoading = false,
-            totalCompletedTrainings = totalTrainings,
-            trainingsNeededForNextLevel = thresholdForNext,
-            trainingsDoneOnCurrentLevel = doneOnLevel,
-            nextLevel = nextLevel,
-            progressToNextLevel = progress
-        )
     }
 
     private fun levelForTrainingsCount(count: Int): TrainingLevel {

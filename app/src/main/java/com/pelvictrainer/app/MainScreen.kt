@@ -21,15 +21,22 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,10 +58,13 @@ import androidx.navigation.navArgument
 import com.pelvictrainer.achievements.AchievementsScreen
 import com.pelvictrainer.app.legal.LegalDocument
 import com.pelvictrainer.app.legal.LegalDocumentScreen
+import com.pelvictrainer.auth.presentation.BackupCodesScreen
 import com.pelvictrainer.auth.presentation.ProfileScreen
+import com.pelvictrainer.auth.presentation.Setup2FAScreen
 import com.pelvictrainer.calendar.CalendarScreen
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
 import com.pelvictrainer.domain.model.ThemeMode
+import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import com.pelvictrainer.settings.SettingsScreen
 import com.pelvictrainer.statistics.StatisticsScreen
 import com.pelvictrainer.workouts.WorkoutsScreen
@@ -123,6 +133,7 @@ fun MainScreen(
                         }
                     )
                 }
+
                 composable(BottomNavItem.Workouts.route) {
                     WorkoutsScreen(
                         onNavigateBack = {
@@ -136,6 +147,7 @@ fun MainScreen(
                         },
                     )
                 }
+
                 composable(BottomNavItem.Calendar.route) {
                     CalendarScreen(
                         onNavigateToWorkouts = {
@@ -149,6 +161,7 @@ fun MainScreen(
                         }
                     )
                 }
+
                 composable(BottomNavItem.Statistics.route) {
                     StatisticsScreen(
                         onNavigateToWorkouts = {
@@ -165,6 +178,7 @@ fun MainScreen(
                         },
                     )
                 }
+
                 composable(BottomNavItem.Achievements.route) {
                     AchievementsScreen(
                         onNavigateToWorkouts = {
@@ -181,6 +195,7 @@ fun MainScreen(
                         },
                     )
                 }
+
                 composable(BottomNavItem.Settings.route) {
                     SettingsScreen(
                         navController = mainNavController,
@@ -193,6 +208,7 @@ fun MainScreen(
                     )
                 }
 
+                // ===== Профиль =====
                 composable(ProfileRoute.ROUTE) {
                     ProfileScreen(
                         onLoggedOut = {
@@ -203,6 +219,29 @@ fun MainScreen(
                         },
                         onNavigateToBackupCodes = {
                             mainNavController.navigate("backup_codes")
+                        },
+                    )
+                }
+
+                // ===== Setup 2FA =====
+                composable("setup_2fa") {
+                    Setup2FAScreen(
+                        onSetupComplete = {
+                            mainNavController.navigate("backup_codes") {
+                                popUpTo("setup_2fa") { inclusive = true }
+                            }
+                        },
+                        onNavigateBack = {
+                            mainNavController.popBackStack()
+                        },
+                    )
+                }
+
+                // ===== Backup Codes =====
+                composable("backup_codes") {
+                    BackupCodesScreen(
+                        onNavigateBack = {
+                            mainNavController.popBackStack()
                         },
                     )
                 }
@@ -240,6 +279,11 @@ fun MainScreen(
 
 @Composable
 private fun ExpandedBottomBar(mainNavController: NavHostController) {
+    val subscriptionViewModel: SubscriptionViewModel = hiltViewModel()
+    val isPremium by subscriptionViewModel.isPremium.collectAsState(initial = false)
+
+    var showPremiumDialog by remember { mutableStateOf(false) }
+
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Workouts,
@@ -268,17 +312,23 @@ private fun ExpandedBottomBar(mainNavController: NavHostController) {
         ) {
             items.forEach { item ->
                 val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                val isLocked = !isPremium && (item.route in listOf("calendar", "statistics", "achievements"))
 
                 ExpandedNavItem(
                     item = item,
                     isSelected = isSelected,
+                    isLocked = isLocked,
                     onClick = {
-                        mainNavController.navigate(item.route) {
-                            popUpTo(mainNavController.graph.findStartDestination().id) {
-                                saveState = true
+                        if (isLocked) {
+                            showPremiumDialog = true
+                        } else {
+                            mainNavController.navigate(item.route) {
+                                popUpTo(mainNavController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
                     },
                     modifier = Modifier.weight(if (isSelected) 3.5f else 1f),
@@ -286,12 +336,45 @@ private fun ExpandedBottomBar(mainNavController: NavHostController) {
             }
         }
     }
+
+    if (showPremiumDialog) {
+        AlertDialog(
+            onDismissRequest = { showPremiumDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Доступно в Premium") },
+            text = {
+                Text("Этот раздел доступен только в Premium версии. Оформите подписку чтобы получить доступ к календарю, статистике и достижениям.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPremiumDialog = false
+                        mainNavController.navigate("premium")
+                    }
+                ) {
+                    Text("Оформить Premium")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPremiumDialog = false }) {
+                    Text("Позже")
+                }
+            }
+        )
+    }
 }
 
 @Composable
 private fun ExpandedNavItem(
     item: BottomNavItem,
     isSelected: Boolean,
+    isLocked: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -320,13 +403,25 @@ private fun ExpandedNavItem(
         Icon(
             imageVector = item.icon,
             contentDescription = item.label,
-            tint = if (isSelected) {
+            tint = if (isLocked) {
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            } else if (isSelected) {
                 MaterialTheme.colorScheme.primary
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
             modifier = Modifier.size(22.dp),
         )
+
+        if (isLocked) {
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = "Заблокировано",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(12.dp),
+            )
+        }
 
         if (isSelected) {
             Spacer(modifier = Modifier.width(6.dp))

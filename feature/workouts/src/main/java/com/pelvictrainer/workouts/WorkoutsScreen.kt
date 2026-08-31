@@ -69,6 +69,7 @@ fun WorkoutsScreen(
     val availablePresetIds by viewModel.availablePresetIds.collectAsState(initial = listOf(1L))
 
     var showPremiumDialog by remember { mutableStateOf(false) }
+    var showDailyLimitDialog by remember { mutableStateOf(false) }
     var lockedPresetName by remember { mutableStateOf("") }
 
     LaunchedEffect(levelUpEvent) {
@@ -139,7 +140,13 @@ fun WorkoutsScreen(
                         WorkoutCard(
                             preset = preset,
                             isRecommended = isRecommended,
-                            onClick = { onWorkoutSelected(preset.id) }
+                            onClick = {
+                                if (isPremium || uiState.canTrainToday) {
+                                    onWorkoutSelected(preset.id)
+                                } else {
+                                    showDailyLimitDialog = true
+                                }
+                            }
                         )
                     } else {
                         LockedWorkoutCard(
@@ -182,6 +189,38 @@ fun WorkoutsScreen(
             dismissButton = {
                 TextButton(onClick = { showPremiumDialog = false }) {
                     Text("Позже")
+                }
+            }
+        )
+    }
+
+    if (showDailyLimitDialog) {
+        AlertDialog(
+            onDismissRequest = { showDailyLimitDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Лимит на сегодня исчерпан") },
+            text = {
+                Text("В бесплатной версии доступна только 1 тренировка в день. Оформите Premium чтобы тренироваться без ограничений.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDailyLimitDialog = false
+                        onNavigateToPremium()
+                    }
+                ) {
+                    Text("Оформить Premium")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDailyLimitDialog = false }) {
+                    Text("Понятно")
                 }
             }
         )

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.material3.AlertDialog
 
 @Composable
 fun ProfileScreen(
@@ -54,6 +54,8 @@ fun ProfileScreen(
 
     var showDisableDialog by remember { mutableStateOf(false) }
     var showDisableSuccess by remember { mutableStateOf(false) }
+    var showRegenerateDialog by remember { mutableStateOf(false) }
+    var showRegenerateSuccess by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         twoFAViewModel.load2FAStatus()
@@ -64,6 +66,14 @@ fun ProfileScreen(
         if (twoFAState.is2FAEnabled == false && showDisableDialog) {
             showDisableDialog = false
             showDisableSuccess = true
+        }
+    }
+
+    // Отслеживаем успешную регенерацию — переходим на экран с новыми кодами
+    LaunchedEffect(twoFAState.backupCodes, showRegenerateDialog) {
+        if (twoFAState.backupCodes.isNotEmpty() && showRegenerateDialog) {
+            showRegenerateDialog = false
+            showRegenerateSuccess = true
         }
     }
 
@@ -152,7 +162,7 @@ fun ProfileScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                if (twoFAState.isLoading) {
+                if (twoFAState.isLoading && twoFAState.backupCodes.isEmpty()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
@@ -204,6 +214,8 @@ fun ProfileScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Spacer(Modifier.height(12.dp))
+
+                        // === Первая строка кнопок ===
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -215,14 +227,24 @@ fun ProfileScreen(
                                 Text("Backup-коды")
                             }
                             TextButton(
-                                onClick = { showDisableDialog = true },
+                                onClick = { showRegenerateDialog = true },
                                 modifier = Modifier.weight(1f),
                             ) {
-                                Text(
-                                    "Отключить",
-                                    color = MaterialTheme.colorScheme.error,
-                                )
+                                Text("🔄 Новые коды")
                             }
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        // === Вторая строка кнопок ===
+                        TextButton(
+                            onClick = { showDisableDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                            ),
+                        ) {
+                            Text("Отключить 2FA")
                         }
                     }
                 }
@@ -284,13 +306,28 @@ fun ProfileScreen(
         )
     }
 
+    // === Диалог регенерации backup-кодов ===
+    if (showRegenerateDialog) {
+        RegenerateCodesDialog(
+            isLoading = twoFAState.isLoading,
+            error = twoFAState.error,
+            onConfirm = { code ->
+                twoFAViewModel.regenerateBackupCodes(code)
+            },
+            onDismiss = {
+                showRegenerateDialog = false
+                twoFAViewModel.clearError()
+            },
+        )
+    }
+
     // === Диалог успешного отключения ===
     if (showDisableSuccess) {
         AlertDialog(
             onDismissRequest = { showDisableSuccess = false },
             title = {
                 Text(
-                    text = "2FA отключена",
+                    text = "✅ 2FA отключена",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
@@ -307,6 +344,39 @@ fun ProfileScreen(
                     twoFAViewModel.load2FAStatus()
                 }) {
                     Text("OK")
+                }
+            },
+        )
+    }
+
+    // === Диалог успешной регенерации — предлагаем посмотреть новые коды ===
+    if (showRegenerateSuccess) {
+        AlertDialog(
+            onDismissRequest = { showRegenerateSuccess = false },
+            title = {
+                Text(
+                    text = "🔄 Новые коды получены!",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    text = "Backup-коды были успешно обновлены. Старые коды больше недействительны. Обязательно сохраните новые коды в надёжном месте.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRegenerateSuccess = false
+                    onNavigateToBackupCodes()
+                }) {
+                    Text("Показать коды")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRegenerateSuccess = false }) {
+                    Text("Позже")
                 }
             },
         )

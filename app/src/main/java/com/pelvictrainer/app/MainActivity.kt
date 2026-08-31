@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.pelvictrainer.auth.presentation.SplashScreen
 import com.pelvictrainer.auth.presentation.navigation.AuthRoutes
 import com.pelvictrainer.auth.presentation.navigation.authGraph
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
+import com.pelvictrainer.feature.TrainingScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -56,6 +59,22 @@ class MainActivity : ComponentActivity() {
                                     rootNavController.navigate(AuthRoutes.LOGIN) {
                                         popUpTo("main") { inclusive = true }
                                     }
+                                }
+                            )
+                        }
+
+                        // 4. Экран тренировки
+                        composable(
+                            route = "training/{presetId}",
+                            arguments = listOf(
+                                navArgument("presetId") { type = NavType.LongType }
+                            )
+                        ) { backStackEntry ->
+                            val presetId = backStackEntry.arguments?.getLong("presetId") ?: 1L
+                            TrainingScreen(
+                                presetId = presetId,
+                                onNavigateBack = {
+                                    rootNavController.popBackStack()
                                 }
                             )
                         }
