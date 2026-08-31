@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -51,6 +52,7 @@ fun ProfileScreen(
 ) {
     val authState by authViewModel.state.collectAsState()
     val twoFAState by twoFAViewModel.state.collectAsState()
+    val isPremium by twoFAViewModel.isPremium.collectAsState(initial = false)
 
     var showDisableDialog by remember { mutableStateOf(false) }
     var showDisableSuccess by remember { mutableStateOf(false) }
@@ -59,6 +61,7 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         twoFAViewModel.load2FAStatus()
+        twoFAViewModel.refreshSubscription()
     }
 
     // Отслеживаем успешное отключение 2FA
@@ -248,6 +251,52 @@ fun ProfileScreen(
                         }
                     }
                 }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // === Секция подписки ===
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = if (isPremium) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                },
+            ),
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        if (isPremium) Icons.Default.Star else Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = if (isPremium) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = if (isPremium) "👑 Premium активен" else "🆓 Бесплатная версия",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    text = if (isPremium) {
+                        "Все тренировки, календарь, статистика и достижения доступны без ограничений."
+                    } else {
+                        "Доступна 1 тренировка в день. Оформите Premium для полного доступа."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
 

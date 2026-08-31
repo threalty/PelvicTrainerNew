@@ -57,22 +57,35 @@ class WorkoutsViewModel @Inject constructor(
     val isPremium = subscriptionRepository.subscriptionState.map { it.isPremiumActive }
 
     // ИСПРАВЛЕНО: фильтрация по уровню пресета
-    val availablePresetIds: StateFlow<List<Long>> = combine(
-        subscriptionRepository.subscriptionState,
-        trainingRepository.getPresets()
-    ) { subscriptionState, presets ->
-        if (subscriptionState.isPremiumActive) {
-            // Премиум: все пресеты доступны
-            presets.map { it.id }
-        } else {
-            // Бесплатный: только пресеты уровня BEGINNER
-            presets.filter { it.level == TrainingLevel.BEGINNER }.map { it.id }
+    // ИСПРАВЛЕНО: используем метод из репозитория
+    val availablePresetIds: StateFlow<List<Long>> = subscriptionRepository.subscriptionState
+        .map { subscriptionState ->
+            val presets = trainingRepository.getPresets().first()
+            android.util.Log.d("WorkoutsVM", "📊 Subscription isPremiumActive: ${subscriptionState.isPremiumActive}")
+            android.util.Log.d("WorkoutsVM", "📊 Total presets: ${presets.size}")
+            presets.forEach { preset ->
+                android.util.Log.d("WorkoutsVM", "  Preset ${preset.id}: ${preset.name}, level=${preset.level}")
+            }
+
+            if (subscriptionState.isPremiumActive) {
+                // Премиум: все пресеты
+                val allIds = presets.map { it.id }
+                android.util.Log.d("WorkoutsVM", "✅ Premium: доступные ID = $allIds")
+                allIds
+            } else {
+                // Бесплатный: только BEGINNER
+                val beginnerIds = presets
+                    .filter { it.level == TrainingLevel.BEGINNER }
+                    .map { it.id }
+                android.util.Log.d("WorkoutsVM", "🆓 Free: доступные ID = $beginnerIds")
+                beginnerIds
+            }
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyList()
-    )
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = listOf(1L)
+        )
 
     init {
         loadWorkouts()

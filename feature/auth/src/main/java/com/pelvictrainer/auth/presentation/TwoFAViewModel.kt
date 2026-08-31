@@ -3,10 +3,12 @@ package com.pelvictrainer.auth.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.auth.AuthRepository
+import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,10 +29,14 @@ data class TwoFAUiState(
 @HiltViewModel
 class TwoFAViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val subscriptionRepository: SubscriptionRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TwoFAUiState())
     val state: StateFlow<TwoFAUiState> = _state.asStateFlow()
+
+    // === НОВОЕ: Состояние подписки ===
+    val isPremium = subscriptionRepository.subscriptionState.map { it.isPremiumActive }
 
     init {
         load2FAStatus()
@@ -142,5 +148,25 @@ class TwoFAViewModel @Inject constructor(
             verifyCode = "",
             error = null,
         )
+    }
+
+    // === НОВОЕ: Сброс Premium (для отладки) ===
+    fun resetPremium() = viewModelScope.launch {
+        try {
+            subscriptionRepository.deactivatePremium()
+            _state.update { it.copy(error = null) }
+        } catch (e: Exception) {
+            _state.update { it.copy(error = "Ошибка сброса: ${e.message}") }
+        }
+    }
+
+    // === НОВОЕ: Проверить подписку с сервера ===
+    fun refreshSubscription() = viewModelScope.launch {
+        try {
+            subscriptionRepository.refreshFromServer()
+            _state.update { it.copy(error = null) }
+        } catch (e: Exception) {
+            _state.update { it.copy(error = "Ошибка обновления: ${e.message}") }
+        }
     }
 }

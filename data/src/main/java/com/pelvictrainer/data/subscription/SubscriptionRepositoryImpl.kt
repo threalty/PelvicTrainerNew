@@ -52,6 +52,8 @@ class SubscriptionRepositoryImpl @Inject constructor(
     override suspend fun refreshFromServer() {
         if (!tokenStorage.isLoggedIn) {
             Log.d(TAG, "Пропуск refresh: пользователь не залогинен")
+            // Если не залогинен — точно не премиум
+            deactivatePremium()
             return
         }
 
@@ -61,11 +63,17 @@ class SubscriptionRepositoryImpl @Inject constructor(
 
             context.subscriptionDataStore.edit { prefs ->
                 prefs[KEY_IS_PREMIUM] = response.hasSubscription
-                prefs[KEY_PLAN] = response.plan
+                prefs[KEY_PLAN] = response.plan ?: "free"
                 prefs[KEY_EXPIRES_AT] = response.expiresAt?.let { parseDate(it) } ?: 0L
+            }
+
+            // Если на сервере нет подписки — деактивируем локально
+            if (!response.hasSubscription) {
+                Log.d(TAG, "🆓 На сервере нет подписки — деактивируем Premium локально")
             }
         } catch (e: Exception) {
             Log.w(TAG, "Не удалось обновить подписку с сервера: ${e.message}")
+            // При ошибке сети НЕ деактивируем — оставляем как есть
         }
     }
 
@@ -121,11 +129,14 @@ class SubscriptionRepositoryImpl @Inject constructor(
 
     override suspend fun getAvailablePresetIds(): List<Long> {
         val state = subscriptionState.first()
-
-        return if (state.isPremiumActive) {
-            listOf(1L, 2L, 3L)
+        if (state.isPremiumActive) {
+            // Премиум: все пресеты
+            return trainingRepository.getPresets().first().map { it.id }
         } else {
-            listOf(1L)
+            // Бесплатный: только пресеты уровня BEGINNER
+            return trainingRepository.getPresets().first()
+                .filter { it.level == com.pelvictrainer.domain.model.TrainingLevel.BEGINNER }
+                .map { it.id }
         }
     }
 

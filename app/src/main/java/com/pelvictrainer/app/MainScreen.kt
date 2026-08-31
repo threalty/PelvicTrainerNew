@@ -2,6 +2,7 @@ package com.pelvictrainer.app
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -94,9 +95,15 @@ fun MainScreen(
 ) {
     val mainNavController = rememberNavController()
     val prefsViewModel: MainScreenViewModel = hiltViewModel()
+    val subscriptionViewModel: SubscriptionViewModel = hiltViewModel() // ДОБАВИТЬ
     val prefs by prefsViewModel.repository.userPreferences.collectAsState(
         initial = com.pelvictrainer.domain.model.UserPreferences(),
     )
+
+    // === НОВОЕ: Автоматически проверяем подписку с сервера при старте ===
+    LaunchedEffect(Unit) {
+        subscriptionViewModel.refreshFromServer()
+    }
 
     val isDarkTheme = when (prefs.themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
