@@ -60,6 +60,7 @@ class AuthRepositoryImpl @Inject constructor(
                 tokenStorage.refreshToken = refreshToken
                 tokenStorage.userEmail = user.email
                 tokenStorage.userName = user.name
+                Log.d(TAG, "✅ Login saved: email='${user.email}', name='${user.name}'")
                 syncHistoryFromServer()
 
                 LoginResult.Success
@@ -96,17 +97,21 @@ class AuthRepositoryImpl @Inject constructor(
                     tokenStorage.refreshToken = refreshToken
                     tokenStorage.userEmail = user.email
                     tokenStorage.userName = user.name
+                    Log.d(TAG, "✅ Register saved: email='${user.email}', name='${user.name}'")
                     syncHistoryFromServer()
                 }
             }
         }
 
-    override suspend fun logout() = withContext(Dispatchers.IO) {
-        val refresh = tokenStorage.refreshToken
-        if (refresh != null) {
-            runCatching { api.logout(RefreshRequest(refresh)) }
+    override suspend fun logout() {
+        withContext(Dispatchers.IO) {
+            val refresh = tokenStorage.refreshToken
+            if (refresh != null) {
+                runCatching { api.logout(RefreshRequest(refresh)) }
+            }
+            tokenStorage.clear()
+            Log.d(TAG, "✅ Logout: TokenStorage cleared")
         }
-        tokenStorage.clear()
     }
 
     override suspend fun isLoggedIn(): Boolean = tokenStorage.isLoggedIn
@@ -124,10 +129,14 @@ class AuthRepositoryImpl @Inject constructor(
                 val response: TwoFAVerifyLoginResponse = api.verify2FALogin(
                     VerifyLoginRequest(userId = userId, code = code)
                 )
+                Log.d(TAG, "📥 2FA response: email='${response.email}', name='${response.name}'")
+
                 tokenStorage.accessToken = response.accessToken
                 tokenStorage.refreshToken = response.refreshToken
                 tokenStorage.userEmail = response.email
-                tokenStorage.userName = response.name ?: ""
+                tokenStorage.userName = response.name?.takeIf { it.isNotBlank() } ?: "Пользователь"
+
+                Log.d(TAG, "✅ 2FA saved: email='${tokenStorage.userEmail}', name='${tokenStorage.userName}'")
                 syncHistoryFromServer()
                 LoginResult.Success
             } catch (e: Exception) {
@@ -142,10 +151,14 @@ class AuthRepositoryImpl @Inject constructor(
                 val response: TwoFAVerifyBackupResponse = api.verify2FABackup(
                     VerifyBackupRequest(userId = userId, code = code)
                 )
+                Log.d(TAG, "📥 Backup response: email='${response.email}', name='${response.name}'")
+
                 tokenStorage.accessToken = response.accessToken
                 tokenStorage.refreshToken = response.refreshToken
                 tokenStorage.userEmail = response.email
-                tokenStorage.userName = response.name ?: ""
+                tokenStorage.userName = response.name?.takeIf { it.isNotBlank() } ?: "Пользователь"
+
+                Log.d(TAG, "✅ Backup saved: email='${tokenStorage.userEmail}', name='${tokenStorage.userName}'")
                 syncHistoryFromServer()
                 LoginResult.Success
             } catch (e: Exception) {

@@ -36,6 +36,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -79,6 +80,11 @@ fun SettingsScreen(
     val authState by viewModel.authState.collectAsState()
     val isPremium by viewModel.isPremium.collectAsState(initial = false)
 
+    // === НОВОЕ: Обновляем данные при каждом открытии экрана ===
+    LaunchedEffect(Unit) {
+        viewModel.refreshAuthState()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Настройки") })
@@ -101,7 +107,25 @@ fun SettingsScreen(
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        if (authState.isLoggedIn) {
+                        if (authState.isLoading) {
+                            // === НОВОЕ: Loading state ===
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                androidx.compose.material3.CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Загрузка...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else if (authState.isLoggedIn && authState.userEmail != null) {
+                            // === Пользователь залогинен ===
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.AccountCircle,
@@ -170,6 +194,7 @@ fun SettingsScreen(
                                 Text("Выйти из аккаунта")
                             }
                         } else {
+                            // === Пользователь не залогинен ===
                             Text(
                                 text = "Синхронизируйте тренировки между устройствами",
                                 style = MaterialTheme.typography.bodyMedium,

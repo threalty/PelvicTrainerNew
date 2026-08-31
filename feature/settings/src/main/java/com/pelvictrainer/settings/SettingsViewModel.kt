@@ -1,5 +1,6 @@
 package com.pelvictrainer.settings
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.analytics.AnalyticsTracker
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AuthUiState(
+    val isLoading: Boolean = true,
     val isLoggedIn: Boolean = false,
     val userEmail: String? = null,
     val userName: String? = null,
@@ -32,6 +34,10 @@ class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     val subscriptionRepository: SubscriptionRepository,
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "SettingsVM"
+    }
 
     private val _uiState = MutableStateFlow(UserPreferences())
     val uiState: StateFlow<UserPreferences> = _uiState.asStateFlow()
@@ -47,13 +53,37 @@ class SettingsViewModel @Inject constructor(
                 _uiState.value = prefs
             }
         }
+
+        // Загружаем данные при создании
+        refreshAuthState()
+    }
+
+    fun refreshAuthState() {
         viewModelScope.launch {
-            val loggedIn = authRepository.isLoggedIn()
-            _authState.value = AuthUiState(
-                isLoggedIn = loggedIn,
-                userEmail = authRepository.getCurrentUserEmail(),
-                userName = authRepository.getCurrentUserName(),
-            )
+            _authState.value = _authState.value.copy(isLoading = true)
+
+            try {
+                val email = authRepository.getCurrentUserEmail()
+                val name = authRepository.getCurrentUserName()
+                val loggedIn = authRepository.isLoggedIn()
+
+                Log.d(TAG, "🔄 refreshAuthState: email='$email', name='$name', loggedIn=$loggedIn")
+
+                _authState.value = AuthUiState(
+                    isLoading = false,
+                    isLoggedIn = loggedIn,
+                    userEmail = email,
+                    userName = name,
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ refreshAuthState failed", e)
+                _authState.value = AuthUiState(
+                    isLoading = false,
+                    isLoggedIn = false,
+                    userEmail = null,
+                    userName = null,
+                )
+            }
         }
     }
 
@@ -61,7 +91,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.logout()
             analytics.trackEvent("logout")
-            _authState.value = AuthUiState(isLoggedIn = false)
+            _authState.value = AuthUiState(
+                isLoading = false,
+                isLoggedIn = false,
+                userEmail = null,
+                userName = null
+            )
         }
     }
 

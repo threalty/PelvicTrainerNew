@@ -44,7 +44,18 @@ class AuthViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val loggedIn = authRepository.isLoggedIn()
-            _state.update { it.copy(isLoggedIn = loggedIn) }
+            val email = authRepository.getCurrentUserEmail() ?: ""
+            val name = authRepository.getCurrentUserName() ?: ""
+
+            Log.d(TAG, "✅ Init: loggedIn=$loggedIn, email='$email', name='$name'")
+
+            _state.update {
+                it.copy(
+                    isLoggedIn = loggedIn,
+                    email = email,
+                    name = name
+                )
+            }
         }
     }
 
@@ -87,8 +98,19 @@ class AuthViewModel @Inject constructor(
         when (result) {
             is LoginResult.Success -> {
                 runCatching { YandexMetrica.reportEvent("login_success") }
+
+                // === НОВОЕ: Загружаем email и name после успешного логина ===
+                val email = authRepository.getCurrentUserEmail() ?: _state.value.email
+                val name = authRepository.getCurrentUserName() ?: ""
+
                 _state.update {
-                    it.copy(isLoading = false, isLoginSuccess = true, isLoggedIn = true)
+                    it.copy(
+                        isLoading = false,
+                        isLoginSuccess = true,
+                        isLoggedIn = true,
+                        email = email,
+                        name = name
+                    )
                 }
             }
             is LoginResult.Requires2FA -> {
@@ -127,15 +149,26 @@ class AuthViewModel @Inject constructor(
         when (result) {
             is LoginResult.Success -> {
                 runCatching { YandexMetrica.reportEvent(successEvent) }
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isLoginSuccess = true,
-                        isLoggedIn = true,
-                        requires2FAUserId = null,
-                        requires2FAEmail = null,
-                        twoFACode = "",
-                    )
+
+                // === НОВОЕ: Загружаем email и name после успешной 2FA ===
+                viewModelScope.launch {
+                    val email = authRepository.getCurrentUserEmail() ?: _state.value.requires2FAEmail ?: ""
+                    val name = authRepository.getCurrentUserName() ?: ""
+
+                    Log.d(TAG, "✅ 2FA success: email='$email', name='$name'")
+
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            isLoginSuccess = true,
+                            isLoggedIn = true,
+                            email = email,
+                            name = name,
+                            requires2FAUserId = null,
+                            requires2FAEmail = null,
+                            twoFACode = "",
+                        )
+                    }
                 }
             }
             is LoginResult.Requires2FA ->
@@ -156,8 +189,19 @@ class AuthViewModel @Inject constructor(
         ).fold(
             onSuccess = {
                 runCatching { YandexMetrica.reportEvent("register_success") }
+
+                // === НОВОЕ: Загружаем email и name после успешной регистрации ===
+                val email = authRepository.getCurrentUserEmail() ?: _state.value.email
+                val name = authRepository.getCurrentUserName() ?: _state.value.name
+
                 _state.update {
-                    it.copy(isLoading = false, isLoginSuccess = true, isLoggedIn = true)
+                    it.copy(
+                        isLoading = false,
+                        isLoginSuccess = true,
+                        isLoggedIn = true,
+                        email = email,
+                        name = name
+                    )
                 }
             },
             onFailure = { t ->

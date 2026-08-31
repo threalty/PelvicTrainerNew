@@ -1,5 +1,11 @@
 package com.pelvictrainer.domain.auth
 
+data class UserAuthState(
+    val isLoggedIn: Boolean = false,
+    val email: String? = null,
+    val name: String? = null,
+)
+
 interface AuthRepository {
     suspend fun login(email: String, password: String): LoginResult
     suspend fun register(
