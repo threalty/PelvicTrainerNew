@@ -65,4 +65,7 @@ dependencies {
     // AppMetrica (старый API — как в остальном проекте) — НЕ ТРОГАТЬ
     //noinspection UseTomlInstead,PlaySdkIndexDeprecated
     implementation("com.yandex.android:mobmetricalib:5.3.0")
+
+    // НОВОЕ: QR-код генерация
+    implementation(libs.qrcode.kotlin)
 }

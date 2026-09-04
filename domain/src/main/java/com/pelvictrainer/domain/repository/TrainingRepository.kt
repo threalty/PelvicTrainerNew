@@ -12,10 +12,13 @@ interface TrainingRepository {
     suspend fun saveTrainingSession(presetId: Long, completedReps: Int, durationSeconds: Long)
     suspend fun deleteAllSessions()
 
-    // ===== НОВОЕ: для синхронизации =====
+    // ===== Синхронизация сессий =====
     suspend fun getUnsyncedSessions(): List<TrainingSession>
     suspend fun markAsSynced(localId: Long, serverSessionId: Int)
     suspend fun hasDuplicateSession(date: Long, presetId: Long, duration: Long): Boolean
     suspend fun insertFromServer(session: TrainingSession)
     suspend fun deleteSyncedSessions()
+
+    // ===== НОВОЕ: Синхронизация пресетов =====
+    suspend fun refreshPresetsFromServer(): Result<Unit>
 }

@@ -37,6 +37,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -97,65 +98,72 @@ fun WorkoutsScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = { viewModel.refreshPresetsFromServer() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                LevelProgressCard(uiState = uiState)
-            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    LevelProgressCard(uiState = uiState)
+                }
 
-            item {
-                Text(
-                    text = "Выберите уровень сложности",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Ваш текущий уровень: ${getLevelDisplayName(uiState.userLevel)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            if (uiState.isLoading) {
                 item {
                     Text(
-                        text = "Загрузка...",
-                        style = MaterialTheme.typography.bodyLarge,
+                        text = "Выберите уровень сложности",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Ваш текущий уровень: ${getLevelDisplayName(uiState.userLevel)}",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            } else {
-                items(uiState.presets) { preset ->
-                    val isAvailable = preset.id in availablePresetIds
-                    val isRecommended = preset.level == uiState.userLevel && isAvailable
 
-                    if (isAvailable) {
-                        WorkoutCard(
-                            preset = preset,
-                            isRecommended = isRecommended,
-                            onClick = {
-                                if (isPremium || uiState.canTrainToday) {
-                                    onWorkoutSelected(preset.id)
-                                } else {
-                                    showDailyLimitDialog = true
+                if (uiState.isLoading) {
+                    item {
+                        Text(
+                            text = "Загрузка...",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    items(uiState.presets) { preset ->
+                        val isAvailable = preset.id in availablePresetIds
+                        val isRecommended = preset.level == uiState.userLevel && isAvailable
+
+                        if (isAvailable) {
+                            WorkoutCard(
+                                preset = preset,
+                                isRecommended = isRecommended,
+                                onClick = {
+                                    if (isPremium || uiState.canTrainToday) {
+                                        onWorkoutSelected(preset.id)
+                                    } else {
+                                        showDailyLimitDialog = true
+                                    }
                                 }
-                            }
-                        )
-                    } else {
-                        LockedWorkoutCard(
-                            preset = preset,
-                            onClick = {
-                                lockedPresetName = preset.name
-                                showPremiumDialog = true
-                            }
-                        )
+                            )
+                        } else {
+                            LockedWorkoutCard(
+                                preset = preset,
+                                onClick = {
+                                    lockedPresetName = preset.name
+                                    showPremiumDialog = true
+                                }
+                            )
+                        }
                     }
                 }
             }

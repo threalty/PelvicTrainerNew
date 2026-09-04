@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -47,9 +48,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pelvictrainer.auth.presentation.components.AuthTextField
+import com.pelvictrainer.auth.presentation.components.QrCodeImage
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,6 +63,7 @@ fun Setup2FAScreen(
     val state by viewModel.state.collectAsState()
     val clipboardManager = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
+    var showQrCode by remember { mutableStateOf(true) }
 
     // Автосброс сообщения "Скопировано" через 2 секунды
     LaunchedEffect(copied) {
@@ -158,7 +160,7 @@ fun Setup2FAScreen(
                     }
                 }
             } else {
-                // Шаг 2: Секретный ключ и подтверждение
+                // Шаг 2: QR-код / секретный ключ и подтверждение
                 Text(
                     text = "Шаг 1: Добавьте аккаунт",
                     style = MaterialTheme.typography.titleMedium,
@@ -176,80 +178,151 @@ fun Setup2FAScreen(
                         modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(
-                            text = "Откройте приложение-аутентификатор и добавьте новый аккаунт вручную:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                        )
+                        // === Переключатель между QR и ручным вводом ===
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            OutlinedButton(
+                                onClick = { showQrCode = true },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (showQrCode) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surface
+                                    }
+                                )
+                            ) {
+                                Icon(
+                                    Icons.Default.QrCode2,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text("QR-код")
+                            }
+                            OutlinedButton(
+                                onClick = { showQrCode = false },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (!showQrCode) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surface
+                                    }
+                                )
+                            ) {
+                                Icon(
+                                    Icons.Default.ContentCopy,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text("Вручную")
+                            }
+                        }
 
                         Spacer(Modifier.height(16.dp))
 
-                        Text(
-                            text = "Название:",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            text = "PelvicTrainer",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        if (showQrCode && !state.setupQrCodeUrl.isNullOrBlank()) {
+                            // === QR-код ===
+                            Text(
+                                text = "Отсканируйте QR-код в приложении-аутентификаторе:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                            )
 
-                        Spacer(Modifier.height(12.dp))
+                            Spacer(Modifier.height(16.dp))
 
-                        Text(
-                            text = "Секретный ключ (нажмите чтобы скопировать):",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                            QrCodeImage(
+                                data = state.setupQrCodeUrl!!,
+                                modifier = Modifier.size(240.dp)
+                            )
 
-                        Spacer(Modifier.height(4.dp))
+                            Spacer(Modifier.height(12.dp))
 
-                        // Сохраняем в локальную переменную для smart cast
-                        val secret = state.setupSecret
-                        if (secret != null) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                                        shape = MaterialTheme.shapes.small,
+                            Text(
+                                text = "Не получается отсканировать? Переключитесь на \"Вручную\" выше.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                        } else {
+                            // === Ручной ввод секрета ===
+                            Text(
+                                text = "Откройте приложение-аутентификатор и добавьте новый аккаунт вручную:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                            )
+
+                            Spacer(Modifier.height(16.dp))
+
+                            Text(
+                                text = "Название:",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = "PelvicTrainer",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+
+                            Spacer(Modifier.height(12.dp))
+
+                            Text(
+                                text = "Секретный ключ (нажмите чтобы скопировать):",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+
+                            Spacer(Modifier.height(4.dp))
+
+                            val secret = state.setupSecret
+                            if (secret != null) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                            shape = MaterialTheme.shapes.small,
+                                        )
+                                        .clickable {
+                                            clipboardManager.setText(AnnotatedString(secret))
+                                            copied = true
+                                        }
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                ) {
+                                    Text(
+                                        text = secret,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                        ),
+                                        fontWeight = FontWeight.SemiBold,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.weight(1f),
                                     )
-                                    .clickable {
-                                        clipboardManager.setText(AnnotatedString(secret))
-                                        copied = true
-                                    }
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                            ) {
-                                Text(
-                                    text = secret,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                    ),
-                                    fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Скопировать",
-                                    modifier = Modifier.size(18.dp),
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                            }
+                                    Spacer(Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.ContentCopy,
+                                        contentDescription = "Скопировать",
+                                        modifier = Modifier.size(18.dp),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
 
-                            // Сообщение "Скопировано!"
-                            if (copied) {
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    text = "✓ Скопировано!",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
+                                if (copied) {
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        text = "✓ Скопировано!",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
                             }
                         }
                     }

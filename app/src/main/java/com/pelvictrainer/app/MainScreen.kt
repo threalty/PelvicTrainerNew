@@ -2,7 +2,6 @@ package com.pelvictrainer.app
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,10 +65,10 @@ import com.pelvictrainer.auth.presentation.Setup2FAScreen
 import com.pelvictrainer.calendar.CalendarScreen
 import com.pelvictrainer.designsystem.theme.PelvicTrainerTheme
 import com.pelvictrainer.domain.model.ThemeMode
-import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import com.pelvictrainer.settings.SettingsScreen
 import com.pelvictrainer.statistics.StatisticsScreen
 import com.pelvictrainer.workouts.WorkoutsScreen
+import com.pelvictrainer.workouts.WorkoutsViewModel
 
 sealed class BottomNavItem(
     val route: String,
@@ -95,14 +95,16 @@ fun MainScreen(
 ) {
     val mainNavController = rememberNavController()
     val prefsViewModel: MainScreenViewModel = hiltViewModel()
-    val subscriptionViewModel: SubscriptionViewModel = hiltViewModel() // ДОБАВИТЬ
+    val subscriptionViewModel: SubscriptionViewModel = hiltViewModel()
+    val workoutsViewModel: WorkoutsViewModel = hiltViewModel()
     val prefs by prefsViewModel.repository.userPreferences.collectAsState(
         initial = com.pelvictrainer.domain.model.UserPreferences(),
     )
 
-    // === НОВОЕ: Автоматически проверяем подписку с сервера при старте ===
+    // === Автоматически проверяем подписку и пресеты с сервера при старте ===
     LaunchedEffect(Unit) {
         subscriptionViewModel.refreshFromServer()
+        workoutsViewModel.refreshPresetsFromServer()
     }
 
     val isDarkTheme = when (prefs.themeMode) {

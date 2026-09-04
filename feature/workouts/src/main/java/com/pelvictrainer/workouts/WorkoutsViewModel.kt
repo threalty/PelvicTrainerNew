@@ -1,5 +1,6 @@
 package com.pelvictrainer.workouts
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pelvictrainer.domain.model.TrainingLevel
@@ -27,6 +28,7 @@ data class WorkoutsUiState(
     val presets: List<TrainingPreset> = emptyList(),
     val userLevel: TrainingLevel = TrainingLevel.BEGINNER,
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val totalCompletedTrainings: Int = 0,
     val trainingsNeededForNextLevel: Int = 0,
     val trainingsDoneOnCurrentLevel: Int = 0,
@@ -43,6 +45,7 @@ class WorkoutsViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
+        private const val TAG = "WorkoutsVM"
         private const val INTERMEDIATE_THRESHOLD = 10
         private const val ADVANCED_THRESHOLD = 30
     }
@@ -56,40 +59,45 @@ class WorkoutsViewModel @Inject constructor(
     // ===== Premium состояние (реактивное) =====
     val isPremium = subscriptionRepository.subscriptionState.map { it.isPremiumActive }
 
-    // ИСПРАВЛЕНО: фильтрация по уровню пресета
-    // ИСПРАВЛЕНО: используем метод из репозитория
-    val availablePresetIds: StateFlow<List<Long>> = subscriptionRepository.subscriptionState
-        .map { subscriptionState ->
-            val presets = trainingRepository.getPresets().first()
-            android.util.Log.d("WorkoutsVM", "📊 Subscription isPremiumActive: ${subscriptionState.isPremiumActive}")
-            android.util.Log.d("WorkoutsVM", "📊 Total presets: ${presets.size}")
-            presets.forEach { preset ->
-                android.util.Log.d("WorkoutsVM", "  Preset ${preset.id}: ${preset.name}, level=${preset.level}")
-            }
-
-            if (subscriptionState.isPremiumActive) {
-                // Премиум: все пресеты
-                val allIds = presets.map { it.id }
-                android.util.Log.d("WorkoutsVM", "✅ Premium: доступные ID = $allIds")
-                allIds
-            } else {
-                // Бесплатный: только BEGINNER
-                val beginnerIds = presets
-                    .filter { it.level == TrainingLevel.BEGINNER }
-                    .map { it.id }
-                android.util.Log.d("WorkoutsVM", "🆓 Free: доступные ID = $beginnerIds")
-                beginnerIds
-            }
+    // Фильтрация по уровню пресета
+    val availablePresetIds: StateFlow<List<Long>> = combine(
+        subscriptionRepository.subscriptionState,
+        trainingRepository.getPresets()
+    ) { subscriptionState, presets ->
+        if (subscriptionState.isPremiumActive) {
+            // Премиум: все пресеты доступны
+            presets.map { it.id }
+        } else {
+            // Бесплатный: только пресеты уровня BEGINNER
+            presets.filter { it.level == TrainingLevel.BEGINNER }.map { it.id }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = listOf(1L)
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
 
     init {
         loadWorkouts()
         checkDailyLimit()
+        refreshPresetsFromServer()
+    }
+
+    // ===== НОВОЕ: Загрузка пресетов с сервера =====
+    fun refreshPresetsFromServer() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+
+            trainingRepository.refreshPresetsFromServer()
+                .onSuccess {
+                    Log.d(TAG, "✅ Пресеты успешно обновлены с сервера")
+                }
+                .onFailure { error ->
+                    Log.w(TAG, "⚠️ Не удалось обновить пресеты: ${error.message}")
+                }
+
+            _uiState.update { it.copy(isRefreshing = false) }
+        }
     }
 
     private fun checkDailyLimit() {

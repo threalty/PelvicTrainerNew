@@ -3,6 +3,7 @@ package com.pelvictrainer.database.di
 import android.content.Context
 import androidx.room.Room
 import com.pelvictrainer.database.PelvicDatabase
+import com.pelvictrainer.database.dao.PresetDao
 import com.pelvictrainer.database.dao.TrainingDao
 import dagger.Module
 import dagger.Provides
@@ -33,5 +34,11 @@ object DatabaseModule {
     @Singleton
     fun provideTrainingDao(database: PelvicDatabase): TrainingDao {
         return database.trainingDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePresetDao(database: PelvicDatabase): PresetDao {
+        return database.presetDao()
     }
 }
