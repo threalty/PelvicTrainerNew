@@ -1,5 +1,7 @@
 package com.pelvictrainer.domain.auth
 
+import kotlinx.coroutines.flow.Flow
+
 data class UserAuthState(
     val isLoggedIn: Boolean = false,
     val email: String? = null,
@@ -7,6 +9,9 @@ data class UserAuthState(
 )
 
 interface AuthRepository {
+    // === НОВОЕ: Реактивное состояние авторизации ===
+    val userAuthStateFlow: Flow<UserAuthState>
+
     suspend fun login(email: String, password: String): LoginResult
     suspend fun register(
         email: String,

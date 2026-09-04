@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml:2:13-83
-INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml:2:13-83
+ADDED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml:2:13-83
+INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml:2:13-83
 	package
-		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml
+		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml
 	xmlns:android
-		ADDED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml:2:23-81
+		ADDED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml:2:23-81
 uses-sdk
-INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml reason: use-sdk injection requested
-INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml
-INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml
+INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml reason: use-sdk injection requested
+INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml
+INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml
 	android:targetSdkVersion
-		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml
+		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml
 	android:minSdkVersion
-		INJECTED from F:\code\PelvicTrainer2\data\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest6302225928038711111.xml
+		INJECTED from /Users/andreykozhokar/AndroidStudioProjects/PelvicTrainerNew/data/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4724983143128029763.xml

@@ -20,6 +20,8 @@ import com.pelvictrainer.network.dto.VerifyLoginRequest
 import com.pelvictrainer.network.dto.VerifySetupRequest
 import com.pelvictrainer.network.dto.toEpochMillis
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,6 +36,16 @@ class AuthRepositoryImpl @Inject constructor(
     companion object {
         private const val TAG = "AuthRepository"
     }
+
+    // === Реактивное состояние авторизации через Flow из TokenStorage ===
+    override val userAuthStateFlow: Flow<com.pelvictrainer.domain.auth.UserAuthState> =
+        tokenStorage.authStateFlow.map { storageState ->
+            com.pelvictrainer.domain.auth.UserAuthState(
+                isLoggedIn = storageState.isLoggedIn,
+                email = storageState.email,
+                name = storageState.name,
+            )
+        }
 
     override suspend fun login(email: String, password: String): LoginResult =
         withContext(Dispatchers.IO) {
