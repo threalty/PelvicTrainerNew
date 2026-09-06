@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.pelvictrainer.domain.repository.TrainingRepository
 import com.pelvictrainer.domain.subscription.SubscriptionRepository
 import com.pelvictrainer.domain.subscription.SubscriptionState
+import com.pelvictrainer.network.CreatePaymentRequest
 import com.pelvictrainer.network.PelvicApi
 import com.pelvictrainer.network.TokenStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,6 +25,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private val Context.subscriptionDataStore by preferencesDataStore(name = "subscription")
+
+/**
+ * Исключение для случаев, когда требуется внешняя оплата (свяжитесь с поддержкой).
+ * Мобильное приложение не может активировать Premium самостоятельно.
+ */
+class PaymentRequiredException(message: String) : Exception(message)
 
 @Singleton
 class SubscriptionRepositoryImpl @Inject constructor(
@@ -52,55 +59,70 @@ class SubscriptionRepositoryImpl @Inject constructor(
     override suspend fun refreshFromServer() {
         if (!tokenStorage.isLoggedIn) {
             Log.d(TAG, "Пропуск refresh: пользователь не залогинен")
-            // Если не залогинен — точно не премиум
             deactivatePremium()
             return
         }
 
         try {
             val response = api.getMySubscription()
-            Log.d(TAG, "Подписка с сервера: has=${response.hasSubscription}, plan=${response.plan}")
+            Log.d(TAG, "📥 Подписка с сервера: has=${response.hasSubscription}, plan=${response.plan}")
 
+            // ВАЖНО: доверяем только серверу
             context.subscriptionDataStore.edit { prefs ->
                 prefs[KEY_IS_PREMIUM] = response.hasSubscription
                 prefs[KEY_PLAN] = response.plan ?: "free"
                 prefs[KEY_EXPIRES_AT] = response.expiresAt?.let { parseDate(it) } ?: 0L
             }
-
-            // Если на сервере нет подписки — деактивируем локально
-            if (!response.hasSubscription) {
-                Log.d(TAG, "🆓 На сервере нет подписки — деактивируем Premium локально")
-            }
         } catch (e: Exception) {
-            Log.w(TAG, "Не удалось обновить подписку с сервера: ${e.message}")
-            // При ошибке сети НЕ деактивируем — оставляем как есть
+            // При ошибке сети НЕ сбрасываем локальную подписку — пусть остаётся как была
+            Log.w(TAG, "⚠️ Не удалось обновить подписку с сервера: ${e.message}. Используем локальный кэш.")
         }
     }
 
+    /**
+     * Активация Premium — ТОЛЬКО через сервер (реальная оплата или админская активация).
+     * Никакого fallback на локальную активацию.
+     */
     override suspend fun activatePremium(plan: String, expiresAt: Long?) {
-        if (tokenStorage.isLoggedIn) {
-            try {
-                Log.d(TAG, "🌐 Отправка платежа на сервер: plan=$plan")
-                val response = api.createPayment(
-                    com.pelvictrainer.network.CreatePaymentRequest(plan)
-                )
-                Log.d(TAG, "✅ Сервер: payment_id=${response.paymentId}, status=${response.status}")
-                // Обновляем локальный кэш с сервера (там теперь правильные данные)
-                refreshFromServer()
-                return
-            } catch (e: Exception) {
-                Log.w(TAG, "⚠️ Не удалось создать платёж: ${e.message}")
-                // Продолжаем с локальной активацией как fallback
-            }
+        if (!tokenStorage.isLoggedIn) {
+            throw IllegalStateException("Требуется авторизация для активации Premium")
         }
 
-        // Fallback: локальная активация (если нет сети или пользователь не залогинен)
-        context.subscriptionDataStore.edit { prefs ->
-            prefs[KEY_IS_PREMIUM] = true
-            prefs[KEY_PLAN] = plan
-            prefs[KEY_EXPIRES_AT] = expiresAt ?: 0L
+        try {
+            Log.d(TAG, "🌐 Создание платежа на сервере: plan=$plan")
+            val response = api.createPayment(CreatePaymentRequest(plan))
+            Log.d(TAG, "📥 Ответ сервера: payment_id=${response.paymentId}, status=${response.status}")
+
+            // Если сервер вернул "pending" — значит оплата не подключена, нужна связь с поддержкой
+            if (response.status == "pending") {
+                throw PaymentRequiredException(
+                    response.message.ifBlank {
+                        "Оплата временно недоступна. Свяжитесь с поддержкой."
+                    }
+                )
+            }
+
+            // Если сервер ответил "succeeded" (например админ активировал) — синхронизируемся
+            if (response.status == "succeeded") {
+                refreshFromServer()
+                return
+            }
+
+            // Неизвестный статус — тоже показываем ошибку
+            throw PaymentRequiredException(
+                response.message.ifBlank {
+                    "Оплата временно недоступна. Свяжитесь с поддержкой."
+                }
+            )
+        } catch (e: PaymentRequiredException) {
+            // Пробрасываем дальше, чтобы UI показал сообщение
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Ошибка активации Premium: ${e.message}")
+            throw PaymentRequiredException(
+                "Не удалось создать платёж. Свяжитесь с поддержкой: support@pelvictrainer.ru"
+            )
         }
-        Log.d(TAG, "📱 Локальная активация: plan=$plan")
     }
 
     override suspend fun deactivatePremium() {
@@ -109,7 +131,7 @@ class SubscriptionRepositoryImpl @Inject constructor(
             prefs[KEY_PLAN] = "free"
             prefs[KEY_EXPIRES_AT] = 0L
         }
-        Log.d(TAG, "Premium деактивирован")
+        Log.d(TAG, "🆓 Premium деактивирован")
     }
 
     override suspend fun canStartTraining(): Boolean {
@@ -130,10 +152,8 @@ class SubscriptionRepositoryImpl @Inject constructor(
     override suspend fun getAvailablePresetIds(): List<Long> {
         val state = subscriptionState.first()
         if (state.isPremiumActive) {
-            // Премиум: все пресеты
             return trainingRepository.getPresets().first().map { it.id }
         } else {
-            // Бесплатный: только пресеты уровня BEGINNER
             return trainingRepository.getPresets().first()
                 .filter { it.level == com.pelvictrainer.domain.model.TrainingLevel.BEGINNER }
                 .map { it.id }

@@ -59,12 +59,16 @@ fun ProfileScreen(
     var showRegenerateDialog by remember { mutableStateOf(false) }
     var showRegenerateSuccess by remember { mutableStateOf(false) }
 
+    // Безопасная загрузка — обернута в try-catch внутри ViewModel
     LaunchedEffect(Unit) {
-        twoFAViewModel.load2FAStatus()
-        twoFAViewModel.refreshSubscription()
+        try {
+            twoFAViewModel.load2FAStatus()
+            twoFAViewModel.refreshSubscription()
+        } catch (e: Exception) {
+            // Никогда не крашим приложение
+        }
     }
 
-    // Отслеживаем успешное отключение 2FA
     LaunchedEffect(twoFAState.is2FAEnabled) {
         if (twoFAState.is2FAEnabled == false && showDisableDialog) {
             showDisableDialog = false
@@ -72,7 +76,6 @@ fun ProfileScreen(
         }
     }
 
-    // Отслеживаем успешную регенерацию — переходим на экран с новыми кодами
     LaunchedEffect(twoFAState.backupCodes, showRegenerateDialog) {
         if (twoFAState.backupCodes.isNotEmpty() && showRegenerateDialog) {
             showRegenerateDialog = false
@@ -180,18 +183,15 @@ fun ProfileScreen(
                 } else {
                     val is2FAEnabled = twoFAState.is2FAEnabled
                     Text(
-                        text = if (is2FAEnabled == true) {
-                            "✅ 2FA включена"
-                        } else if (is2FAEnabled == false) {
-                            "❌ 2FA выключена"
-                        } else {
-                            "Статус неизвестен"
+                        text = when (is2FAEnabled) {
+                            true -> "✅ 2FA включена"
+                            false -> "❌ 2FA выключена"
+                            null -> "Статус недоступен"
                         },
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (is2FAEnabled == true) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                        color = when (is2FAEnabled) {
+                            true -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
                         },
                     )
 
@@ -218,7 +218,6 @@ fun ProfileScreen(
                         )
                         Spacer(Modifier.height(12.dp))
 
-                        // === Первая строка кнопок ===
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -239,7 +238,6 @@ fun ProfileScreen(
 
                         Spacer(Modifier.height(4.dp))
 
-                        // === Вторая строка кнопок ===
                         TextButton(
                             onClick = { showDisableDialog = true },
                             modifier = Modifier.fillMaxWidth(),
@@ -340,7 +338,6 @@ fun ProfileScreen(
         }
     }
 
-    // === Диалог отключения 2FA ===
     if (showDisableDialog) {
         Disable2FADialog(
             isLoading = twoFAState.isLoading,
@@ -355,7 +352,6 @@ fun ProfileScreen(
         )
     }
 
-    // === Диалог регенерации backup-кодов ===
     if (showRegenerateDialog) {
         RegenerateCodesDialog(
             isLoading = twoFAState.isLoading,
@@ -370,7 +366,6 @@ fun ProfileScreen(
         )
     }
 
-    // === Диалог успешного отключения ===
     if (showDisableSuccess) {
         AlertDialog(
             onDismissRequest = { showDisableSuccess = false },
@@ -398,7 +393,6 @@ fun ProfileScreen(
         )
     }
 
-    // === Диалог успешной регенерации — предлагаем посмотреть новые коды ===
     if (showRegenerateSuccess) {
         AlertDialog(
             onDismissRequest = { showRegenerateSuccess = false },
