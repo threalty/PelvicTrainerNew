@@ -60,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -657,6 +658,21 @@ fun SettingsScreen(
             }
 
             // ===== О приложении =====
+//            SettingsSection(title = "О приложении") {
+//                Card(
+//                    modifier = Modifier.fillMaxWidth(),
+//                    colors = CardDefaults.cardColors(
+//                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+//                    )
+//                ) {
+//                    Column(modifier = Modifier.padding(16.dp)) {
+//                        InfoRow(label = "Версия", value = "1.0.0")
+//                        Spacer(modifier = Modifier.height(8.dp))
+//                        InfoRow(label = "Разработчик", value = " Самозанятый Кожокарь Андрей Валерьевич · ИНН 366228711168")
+//                    }
+//                }
+//            }
+
             SettingsSection(title = "О приложении") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -667,7 +683,23 @@ fun SettingsScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
                         InfoRow(label = "Версия", value = "1.0.0")
                         Spacer(modifier = Modifier.height(8.dp))
-                        InfoRow(label = "Разработчик", value = "PelvicTrainer Team")
+
+                        // Замените InfoRow на Column для длинного текста
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "Разработчик",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Самозанятый Кожокарь Андрей Валерьевич 366228711168 - ИНН",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                softWrap = true,
+                                overflow = TextOverflow.Visible
+                            )
+                        }
                     }
                 }
             }
